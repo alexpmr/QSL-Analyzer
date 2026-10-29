@@ -263,9 +263,16 @@ export function parseLog(text, filename = '', defaults = {}, forced = null) {
   const parsed = format === 'adx' ? parseAdxRecords(text) : format === 'cabrillo' ? parseCabrilloRecords(text) : format === 'edi' ? parseEdiRecords(text) : format === 'csv' ? parseCsvRecords(text) : parseAdifRecords(text);
   const qsos = [], errors = [];
   const station = defaults.station || parsed.header.CALLSIGN || parsed.header.PCALL || parsed.header.STATION_CALLSIGN || '';
+  // Relatório do LoTW (lotwreport.adi): QSL_RCVD significa confirmação pelo LoTW, não QSL em papel.
+  // Inbox do eQSL: todos os registros são confirmações eQSL.
+  const program = String(parsed.header.PROGRAMID || ''), preamble = format === 'adif' ? String(text).slice(0, 400) : '';
+  const origin = /^lotw$/i.test(program) || /Logbook of the World/i.test(preamble) ? 'lotw' : /eqsl/i.test(program) || /eQSL\.cc/i.test(preamble) ? 'eqsl' : '';
   parsed.records.forEach((rec, k) => {
     const q = normalizeRecord(rec, { ...defaults, station });
-    if (q) qsos.push(q); else errors.push({ index: k + 1, call: rec.CALL || '', reason: !rec.CALL ? 'noCall' : 'badDate' });
+    if (!q) { errors.push({ index: k + 1, call: rec.CALL || '', reason: !rec.CALL ? 'noCall' : 'badDate' }); return; }
+    if (origin === 'lotw') { if (q.qslRcvd === 'Y') q.lotwRcvd = 'Y'; q.qslRcvd = ''; q.lotwSent = 'Y'; }
+    if (origin === 'eqsl') { q.eqslRcvd = 'Y'; q.qslRcvd = ''; }
+    qsos.push(q);
   });
-  return { format, header: parsed.header, qsos, errors, total: parsed.records.length };
+  return { format, origin, header: parsed.header, qsos, errors, total: parsed.records.length };
 }

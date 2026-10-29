@@ -18,6 +18,11 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Correção (29/10/2026) — já no código, entra na próxima versão: LoTW importava só os QSOs recentes.**
+  Sem data, o LoTW devolve apenas o que chegou desde o último download (o mantenedor recebeu 7 de milhares).
+  Agora o pedido sempre envia `qso_qsorxsince` (vazio = 1900-01-01, histórico completo). Além disso, um
+  `lotwreport.adi` baixado do site e importado como arquivo é reconhecido (PROGRAMID LoTW): `QSL_RCVD`
+  vira confirmação LoTW, e não QSL em papel; o Inbox do eQSL vira confirmação eQSL. Testes incluídos.
 - **Backlog (29/10/2026): todo download e toda atualização OTA contabilizados.** Garantir, de ponta a ponta,
   que cada download conte exatamente uma vez no contador do site (`download.php`, produto `qsl`):
   - download manual pela página `/qsl` (instalador e portátil, e futuras plataformas Linux/macOS);

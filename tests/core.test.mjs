@@ -113,3 +113,12 @@ test('platform responses',()=>{
   const e=parseResponse('eqsl','<A HREF="../downloadedfiles/abc.adi">.ADI file</A>');assert.equal(e.state.next,'https://www.eqsl.cc/downloadedfiles/abc.adi');
   assert.equal(parseResponse('lotw','<html>Username/password incorrect</html>').error,'AUTH');
 });
+
+test('LoTW: full history by default and lotwreport.adi recognized as LoTW confirmations',()=>{
+  assert.match(buildRequest('lotw',{username:'u',password:'p'}).url,/qso_qsorxsince=1900-01-01/);
+  assert.match(buildRequest('lotw',{username:'u',password:'p',since:'2024-01-01'}).url,/qso_qsorxsince=2024-01-01/);
+  const report='ARRL Logbook of the World Status Report\nGenerated at 2026-10-29 for pt2vhf\n<PROGRAMID:4>LoTW\n<APP_LoTW_NUMREC:1>1\n<eoh>\n<CALL:5>K1ABC <BAND:3>20M <MODE:3>FT8 <QSO_DATE:8>20240310 <TIME_ON:6>120000 <QSL_RCVD:1>Y <STATION_CALLSIGN:6>PT2VHF <eor>\n';
+  const r=parseLog(report,'lotwreport.adi');
+  assert.equal(r.origin,'lotw');assert.equal(r.qsos[0].lotwRcvd,'Y');assert.equal(r.qsos[0].qslRcvd,'');
+  assert.equal(parseLog(adif,'a.adi').qsos[0].qslRcvd,'Y');
+});

@@ -15,7 +15,8 @@ export function buildRequest(kind, creds = {}, state = {}) {
     return { url: PLATFORMS.qrz.url, method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form({ KEY: creds.apiKey, ACTION: 'FETCH', OPTION: option }) };
   }
   if (kind === 'lotw') {
-    const q = { login: creds.username, password: creds.password, qso_query: 1, qso_qsl: 'no', qso_qsldetail: 'yes', qso_mydetail: 'yes', qso_withown: 'yes', qso_qsorxsince: creds.since || undefined };
+    // Sem data, o LoTW devolve só o que chegou desde o último download: pede o histórico completo.
+    const q = { login: creds.username, password: creds.password, qso_query: 1, qso_qsl: 'no', qso_qsldetail: 'yes', qso_mydetail: 'yes', qso_withown: 'yes', qso_qsorxsince: creds.since || '1900-01-01' };
     return { url: PLATFORMS.lotw.url + '?' + form(q), method: 'GET' };
   }
   if (kind === 'eqsl') {
