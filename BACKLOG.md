@@ -18,7 +18,14 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
-(nenhum)
+- **Backlog (29/10/2026): remover toda relação com o QScope.** Tirar qualquer menção ao QScope/QScope.org
+  e ao seu autor do app (textos e ajudas em `src/i18n.mjs`, comentários em `src/stats.mjs`, Sobre/créditos),
+  do README e do CHANGELOG (inclusive notas de versões anteriores) e da página do QSL Analyzer no site
+  (`products.js` e traduções em `assets/js/locales/*`). Reescrever os textos sem a referência, de forma
+  natural. Não registrar em nenhum texto público (changelog, notas da versão, página) que a referência foi
+  retirada.
+- **Backlog (29/10/2026): página do QSL Analyzer no site com screenshots e changelog no fim.** A galeria de
+  screenshots e o histórico de versões (changelog completo, versão a versão) aparecem no fim da página `/qsl`.
 
 ## Resolvidos na 0.2.0 (29/10/2026)
 
