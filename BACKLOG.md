@@ -18,6 +18,12 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (29/10/2026): pacotes com o nome novo na próxima versão.** Gerar os binários como
+  `PT2VHF-QSL-Manager-<versão>-win-x64-setup.exe` / `-portable.exe` (e Linux/macOS quando voltarem): ajustar
+  `artifactName` no `package.json`, os nomes esperados pelo workflow de release e, no site, o
+  `scripts/sync_qsl_release.py`, o padrão de nomes do `prop_parts.php` e a regra de download do `.htaccess`.
+  A 0.4.0 já aceita os dois nomes no OTA; quem ainda estiver na 0.3.0 (que só aceita o nome antigo) atualiza
+  pela página do site. Manter a pasta `downloads/qsl-analyzer/`, o produto `qsl` e os contadores.
 - **Backlog (29/10/2026): aproveitar o N1MM Logger+ além do UDP** (manual oficial: Features, Technical
   Information, Call History, Statistics, External UDP Messages).
   1. **Importar o banco do N1MM (.s3db, SQLite)** de `Documentos\N1MM Logger+\Databases`: listar os concursos
