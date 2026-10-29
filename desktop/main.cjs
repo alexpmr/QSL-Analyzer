@@ -7,7 +7,9 @@ const SITE='https://www.pt2vhf.com',PAGE=SITE+'/qsl';
 const updatePlatform=()=>(process.platform==='win32'?'windows':process.platform==='darwin'?'macos':'linux')+'-'+(process.arch==='arm64'?'arm64':'x64');
 const PLATFORM_HOSTS=new Set(['logbook.qrz.com','lotw.arrl.org','www.eqsl.cc','eqsl.cc','clublog.org','www.clublog.org']);
 const portable=Boolean(process.env.PORTABLE_EXECUTABLE_DIR),smoke=process.argv.includes('--smoke-test');
-let win,dataDir,dbFile,ctyFile,writeQueue=Promise.resolve();
+let win,dataDir,dbFile,ctyFile,writeQueue=Promise.resolve(),pendingAsset=null,pendingUpdate=null,downloadedFile=null;
+const updater=require('./updater.cjs');
+const compareVersions=(a,b)=>{const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++)if((x[i]||0)!==(y[i]||0))return (x[i]||0)-(y[i]||0);return 0;};
 const mainURL=pathToFileURL(path.join(__dirname,'../ui/index.html')).href;
 const canonicalUI=realpathSync(fileURLToPath(mainURL));
 function isMainURL(value){try{const url=new URL(value);if(url.protocol!=='file:')return false;const actual=realpathSync(fileURLToPath(url));return process.platform==='win32'?actual.toLowerCase()===canonicalUI.toLowerCase():actual===canonicalUI;}catch{return false;}}
@@ -39,6 +41,10 @@ async function start(){
   dataDir=portable?path.join(process.env.PORTABLE_EXECUTABLE_DIR,'data'):smoke?path.join(app.getPath('temp'),'qsl-analyzer-smoke-'+process.pid):app.getPath('userData');
   dbFile=path.join(dataDir,'qsl-analyzer.db.json');ctyFile=path.join(dataDir,'cty.dat');
   await fs.mkdir(dataDir,{recursive:true});
+  // Confirma ao script de atualização que a versão nova abriu corretamente.
+  if(process.env.QSL_UPDATE_CONFIRM_FILE&&path.resolve(process.env.QSL_UPDATE_CONFIRM_FILE)===path.join(dataDir,'updates','update-ready.json'))await fs.writeFile(process.env.QSL_UPDATE_CONFIRM_FILE,JSON.stringify({version:app.getVersion()}),'utf8').catch(()=>{});
+  // Limpa pacotes baixados de atualizações anteriores.
+  for(const f of await fs.readdir(path.join(dataDir,'updates')).catch(()=>[]))if(/\.exe(\.partial)?$/.test(f)&&!f.includes(app.getVersion()))await fs.rm(path.join(dataDir,'updates',f),{force:true}).catch(()=>{});
   win=new BrowserWindow({width:1440,height:960,minWidth:1000,minHeight:700,show:!smoke,backgroundColor:'#09111d',title:'PT2VHF QSL Analyzer v'+app.getVersion(),
     webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});
   win.setMenuBarVisibility(false);
@@ -101,12 +107,51 @@ async function start(){
   handle('open-external',url=>{const u=new URL(url);if(u.protocol!=='https:')throw new Error('URL inválida');return shell.openExternal(u.href);});
   handle('factory-reset',async()=>{await writeQueue.catch(()=>{});for(const f of [dbFile,dbFile+'.bak',ctyFile])await fs.rm(f,{force:true});app.relaunch();app.exit(0);});
   // Atualizações oficiais somente por www.pt2vhf.com (update.php lê o updates.json do site).
+  // Atualizações oficiais somente por www.pt2vhf.com (update.php lê o updates.json do site).
+  // No Windows a atualização é automática (OTA): baixa, confere SHA-256, instala e reabre.
   handle('check-update',async()=>{
-    const res=await fetch(`${SITE}/update.php?product=qsl&platform=${updatePlatform()}`,{headers:{'User-Agent':'PT2VHF-QSL-Analyzer/'+app.getVersion(),'Accept':'application/json'}});
+    const kind=portable?'portable':'installer';
+    const res=await fetch(`${SITE}/update.php?product=qsl&platform=${updatePlatform()}${process.platform==='win32'?'&kind='+kind:''}`,{headers:{'User-Agent':'PT2VHF-QSL-Analyzer/'+app.getVersion(),'Accept':'application/json'}});
     if(!res.ok)return {available:false};
     const data=await res.json(),latest=String(data.version||'');
-    const cmp=(a,b)=>{const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++)if((x[i]||0)!==(y[i]||0))return (x[i]||0)-(y[i]||0);return 0;};
-    return {available:data.status==='available'&&Boolean(latest)&&cmp(latest,app.getVersion())>0,latest,url:PAGE,notes:String(data.notes||'')};
+    const available=data.status==='available'&&Boolean(latest)&&compareVersions(latest,app.getVersion())>0;
+    pendingAsset=available?(data.files||[]).find(f=>updater.validAsset(f))||null:null;
+    pendingUpdate=available?{version:latest,notes:String(data.notes||'').slice(0,15000)}:null;
+    return {available,latest,url:PAGE,notes:String(data.notes||''),canInstall:Boolean(pendingAsset)&&process.platform==='win32'&&!smoke};
+  });
+  handle('download-update',async()=>{
+    if(!pendingAsset)throw new Error('Nenhuma atualização disponível');
+    let lastAt=Date.now(),lastBytes=0;
+    downloadedFile=await updater.downloadAsset(pendingAsset,path.join(dataDir,'updates'),progress=>{
+      const now=Date.now(),elapsed=now-lastAt;
+      if(elapsed<200&&progress.transferred<progress.total)return;
+      const speed=(progress.transferred-lastBytes)*1000/Math.max(1,elapsed);lastAt=now;lastBytes=progress.transferred;
+      if(!win.isDestroyed())win.webContents.send('update-progress',{...progress,bytesPerSecond:speed});
+    },{userAgent:'PT2VHF-QSL-Analyzer/'+app.getVersion()});
+    return true;
+  });
+  handle('install-update',async()=>{
+    if(!downloadedFile||!pendingAsset)throw new Error('Atualização ainda não baixada');
+    const sha256=await updater.sha256File(downloadedFile);
+    if(sha256!==pendingAsset.sha256)throw new Error('SHA-256 divergente');
+    await fs.writeFile(path.join(dataDir,'pending-news.json'),JSON.stringify(pendingUpdate),'utf8');
+    const options={Mode:portable?'portable':'installed',Candidate:downloadedFile,Sha256:sha256,ExpectedVersion:pendingUpdate.version,StateFile:dbFile};
+    if(portable){
+      if(!process.env.PORTABLE_EXECUTABLE_FILE||!process.env.PORTABLE_EXECUTABLE_DIR)throw new Error('Dados do executável portátil ausentes');
+      options.Original=process.env.PORTABLE_EXECUTABLE_FILE;options.Target=path.join(process.env.PORTABLE_EXECUTABLE_DIR,pendingAsset.name);
+      options.LauncherPid=Number(process.env.PORTABLE_LAUNCHER_PID)||0;
+    }else options.InstallDir=path.dirname(app.getPath('exe'));
+    await writeQueue.catch(()=>{});
+    await updater.launchHandoff(options,path.join(dataDir,'updates'));
+    setTimeout(()=>app.quit(),300);
+    return true;
+  });
+  // Novidades mostradas uma única vez na primeira abertura depois de atualizar.
+  handle('take-news',async()=>{
+    const f=path.join(dataDir,'pending-news.json'),text=await readText(f);
+    if(!text)return null;
+    await fs.rm(f,{force:true});
+    try{const news=JSON.parse(text);return news.version===app.getVersion()?news:null;}catch{return null;}
   });
 
   if(smoke){

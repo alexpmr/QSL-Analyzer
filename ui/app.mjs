@@ -1090,6 +1090,41 @@ async function loadCountryFile() {
   cty = attachDxcc(parseCty(text), table);
 }
 
+const mb = n => (n / 1048576).toFixed(1).replace('.', ',') + ' MB';
+
+// Atualização OTA: no Windows baixa, confere e instala sozinha; nas demais plataformas abre o site.
+function showUpdateDialog(r) {
+  const dlg = $('#updateNotice');
+  $('#updateNoticeTitle').textContent = t('newVersionTitle');
+  $('#updateNoticeMessage').textContent = t(r.canInstall ? 'newVersionOta' : 'newVersionMessage', { v: r.latest, current: info.version });
+  $('#updateNoticeNotes').textContent = r.notes || '';
+  $('#updateProgressBox').classList.add('hidden');
+  const later = $('#updateNoticeLater'), go = $('#updateNoticeOpen');
+  later.textContent = t('later'); later.disabled = false; later.onclick = () => dlg.close();
+  go.textContent = r.canInstall ? t('updateNow') : t('openDownloadPage'); go.disabled = false;
+  go.onclick = async () => {
+    if (!r.canInstall) { dlg.close(); return backend.openExternal(r.url); }
+    go.disabled = true; later.disabled = true;
+    $('#updateProgressBox').classList.remove('hidden');
+    const off = backend.onUpdateProgress(p => {
+      $('#updateProgress').value = p.percent; $('#updatePct').textContent = Math.floor(p.percent) + '%';
+      $('#updateStats').textContent = t('updateBytes', { done: mb(p.transferred), total: mb(p.total), speed: p.bytesPerSecond ? mb(p.bytesPerSecond) + '/s' : '—' });
+    });
+    try {
+      $('#updateStats').textContent = t('downloading');
+      await backend.downloadUpdate();
+      $('#updateStats').textContent = t('updateInstalling');
+      await persist(true);
+      await backend.installUpdate();
+    } catch (e) {
+      $('#updateStats').textContent = t('updateFailed', { e: e.message });
+      later.disabled = false; later.textContent = t('close');
+      go.disabled = false; go.textContent = t('openDownloadPage'); r = { ...r, canInstall: false };
+    } finally { off(); }
+  };
+  if (!dlg.open) dlg.showModal();
+}
+
 async function checkUpdate(manual = false) {
   if (!isDesktop) return;
   const btn = $('#updateButton');
@@ -1097,17 +1132,19 @@ async function checkUpdate(manual = false) {
     const r = await backend.checkUpdate();
     if (r?.available) {
       btn.textContent = t('updateAvailable', { v: r.latest }); btn.className = 'updateButton available';
-      if (manual) return backend.openExternal(r.url);
-      $('#updateNoticeTitle').textContent = t('newVersionTitle');
-      $('#updateNoticeMessage').textContent = t('newVersionMessage', { v: r.latest, current: info.version });
-      $('#updateNoticeNotes').textContent = r.notes || '';
-      $('#updateNoticeLater').textContent = t('later');
-      $('#updateNoticeOpen').textContent = t('openDownloadPage');
-      $('#updateNoticeOpen').onclick = () => { $('#updateNotice').close(); backend.openExternal(r.url); };
-      $('#updateNoticeLater').onclick = () => $('#updateNotice').close();
-      $('#updateNotice').showModal();
+      ui.updateInfo = r;
+      showUpdateDialog(r);
     } else { btn.textContent = t('upToDate'); btn.className = 'updateButton current'; if (manual) toast(t('upToDate')); }
   } catch { btn.textContent = t('checkUpdate'); if (manual) toast(t('updateCheckFailed'), true); }
+}
+
+async function showNews() {
+  const news = await backend.takeNews().catch(() => null);
+  if (!news) return;
+  $('#newsTitle').textContent = t('whatsNew', { v: news.version });
+  $('#newsNotes').textContent = news.notes || '';
+  $('#newsOk').textContent = t('continue');
+  await new Promise(resolve => { $('#newsOk').onclick = () => $('#newsDialog').close(); $('#newsDialog').addEventListener('close', resolve, { once: true }); $('#newsDialog').showModal(); });
 }
 
 // Aviso do site oficial a cada abertura; a verificação de versão nova vem logo depois de fechá-lo.
@@ -1119,7 +1156,7 @@ function siteNotice() {
   $('#siteNoticeOk').textContent = t('understood');
   $('#siteNoticeLink').onclick = e => { e.preventDefault(); backend.openExternal('https://www.pt2vhf.com/qsl'); };
   $('#siteNoticeOk').onclick = () => dlg.close();
-  dlg.addEventListener('close', () => { checkUpdate(false); autoSyncPlatforms(); }, { once: true });
+  dlg.addEventListener('close', async () => { await showNews(); checkUpdate(false); autoSyncPlatforms(); }, { once: true });
   dlg.showModal();
   $('#siteNoticeOk').focus();
 }

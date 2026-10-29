@@ -1,6 +1,6 @@
 # PT2VHF QSL Analyzer
 
-Aplicativo para **Windows, Linux e macOS** que **analisa os contatos de radioamador** a partir de logs ADIF e de outros formatos conhecidos, guarda tudo num **banco local** e gera estatísticas, mapas, status de QSL e relatórios em PDF. Ele cobre todos os recursos do [QScope.org](https://www.qscope.org), mas roda offline, no seu computador.
+Aplicativo para **Windows, Linux e macOS** que **analisa os contatos de radioamador** a partir de logs ADIF e de outros formatos conhecidos, guarda tudo num **banco local** e gera estatísticas, mapas, status de QSL e relatórios em PDF. Tudo roda offline, no seu computador.
 
 [Notas da versão](CHANGELOG.md) · [Backlog](BACKLOG.md) · [Relatar problema ou sugestão](https://github.com/alexpmr/QSL-Analyzer/issues)
 
@@ -14,7 +14,7 @@ Aplicativo para **Windows, Linux e macOS** que **analisa os contatos de radioama
 - **Plataformas online:** baixa e importa direto do **QRZ.com Logbook** (chave de API), do **ARRL LoTW** (confirmações), do **eQSL.cc** (Inbox) e do **Club Log**. As credenciais só ficam guardadas se você pedir, criptografadas pelo Windows.
 - **Menu Logs:** Importar logs (em um passo, com popup de progresso) · Importar de plataformas (com conferência e sincronização automática) · Modificar logs · Saúde do log · Busca no log (curingas `*` e `?`) · Exportar logs · Backup do banco.
 - **Fichas clicáveis:** indicativos, países/DXCC, quadrículas, prefixos, zonas, continentes e estações abrem uma ficha com todos os seus contatos; a do indicativo mostra também foto e dados do QRZ.com/HamQTH.
-- **Menu Estatísticas** com as 20 análises do QScope: Estatísticas básicas, Estações trabalhadas, Mapas de atividade, Bandas/modos, Primeiro DXCC trabalhado, Trocas de banda, Pausas, Gráficos de QSOs, de duplicados, de pontos e de zonas, DXCC/locator, Arquivos KML (mapas), Azimutes/distâncias, Gráficos de tempo, Gráficos históricos, Tempo de operação, Taxa de QSOs, Taxas máximas e Taxas médias.
+- **Menu Estatísticas** com 20 análises: Estatísticas básicas, Estações trabalhadas, Mapas de atividade, Bandas/modos, Primeiro DXCC trabalhado, Trocas de banda, Pausas, Gráficos de QSOs, de duplicados, de pontos e de zonas, DXCC/locator, Arquivos KML (mapas), Azimutes/distâncias, Gráficos de tempo, Gráficos históricos, Tempo de operação, Taxa de QSOs, Taxas máximas e Taxas médias.
 - **Aba QSL:** confirmações por papel, LoTW e eQSL, matriz **DXCC × banda**, **Diplomas** (DXCC, WAZ, WAS, WPX, VUCC, IOTA), **Faltam confirmar** e **Entidades raras**.
 - **Mais análises:** resumo da atividade no Dashboard, Propagação, Comparar períodos, Estações frequentes, Novos indicativos e Concursos.
 - **Gráficos interativos no estilo BI.** Clique numa barra, célula, ponto do mapa ou rótulo para filtrar a tela inteira, arraste sobre um gráfico de linha para escolher um período e clique na legenda para ligar ou desligar séries. Os filtros se aplicam na hora e aparecem como chips removíveis, com botão de desfazer. Gráficos animados com dicas ao passar o mouse.
@@ -78,4 +78,4 @@ Estrutura: `src/` tem o núcleo sem dependências (leitores, banco, estatística
 
 ## Créditos
 
-Country-Files CTY.DAT de Jim Reisert AD1C, tabela DXCC [k0swe/dxcc-json](https://github.com/k0swe/dxcc-json), mapa Natural Earth. Inspirado no QScope, de Yannick Devos ZL4YY. Desenvolvido por Alex Rodrigues, PT2VHF.
+Country-Files CTY.DAT de Jim Reisert AD1C, tabela DXCC [k0swe/dxcc-json](https://github.com/k0swe/dxcc-json), mapa Natural Earth. Desenvolvido por Alex Rodrigues, PT2VHF.

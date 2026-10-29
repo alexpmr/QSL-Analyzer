@@ -1,4 +1,4 @@
-// Motor de estatísticas: todas as análises equivalentes ao QScope, sobre uma lista de QSOs.
+// Motor de estatísticas: todas as análises sobre uma lista de QSOs.
 import { sortBands, bandRank, modeGroup } from './bands.mjs';
 import { lookup } from './cty.mjs';
 import { gridToLatLon, distanceKm, bearingDeg } from './geo.mjs';

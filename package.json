@@ -1,6 +1,6 @@
 {
   "name": "pt2vhf-qsl-analyzer",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Análise de logs de radioamador (ADIF, Cabrillo, EDI, CSV) com banco local, estatísticas e status de QSL",
   "author": {

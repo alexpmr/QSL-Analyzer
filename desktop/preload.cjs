@@ -15,5 +15,9 @@ contextBridge.exposeInMainWorld('qslAnalyzer',{
   openExternal:url=>call('open-external',url),
   factoryReset:()=>call('factory-reset'),
   checkUpdate:()=>call('check-update'),
-  lookup:request=>call('lookup',request)
+  lookup:request=>call('lookup',request),
+  downloadUpdate:()=>call('download-update'),
+  installUpdate:()=>call('install-update'),
+  takeNews:()=>call('take-news'),
+  onUpdateProgress:callback=>{const handler=(_,p)=>callback(p);ipcRenderer.on('update-progress',handler);return ()=>ipcRenderer.removeListener('update-progress',handler);}
 });

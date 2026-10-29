@@ -1,5 +1,11 @@
 # Notas de versão
 
+## 0.3.0 - 2026-10-29
+
+- Atualização automática no Windows: o aviso de versão nova oferece "Atualizar agora", que baixa o pacote de www.pt2vhf.com com progresso (percentual, bytes e velocidade), confere tamanho e SHA-256, instala (instalador ou portátil) e reabre o app já atualizado, preservando banco, preferências e credenciais.
+- Novidades da versão mostradas uma única vez na primeira abertura depois de atualizar.
+- Textos da tela Sobre, créditos e ajudas revisados.
+
 ## 0.2.0 - 2026-10-29
 
 - Ficha clicável de indicativos, países/DXCC, quadrículas, prefixos, zonas, continentes e estações: todos os QSOs, slots banda × modo, QSL por banda, estações, quadrículas e mapa.
@@ -24,8 +30,8 @@ Primeira versão do PT2VHF QSL Analyzer.
 - Leitura de ADIF (.adi), ADX, Cabrillo 2/3, EDI REG1TEST e CSV; vários arquivos e várias estações de uma vez.
 - Importação direta do QRZ.com Logbook, ARRL LoTW, eQSL.cc (Inbox) e Club Log.
 - Configurações → Banco de dados: limpeza por indicativo de estação, opcionalmente restrita a um container.
-- Menu Logs no fluxo do QScope: containers, enviar, importar, modificar, copiar/filtrar, busca com curingas.
-- 20 páginas de estatística equivalentes ao QScope e aba QSL com matriz DXCC × banda trabalhado/confirmado.
+- Menu Logs: containers, enviar, importar, modificar, copiar/filtrar e busca com curingas.
+- 20 páginas de estatística e aba QSL com matriz DXCC × banda trabalhado/confirmado.
 - Gráficos interativos estilo BI: clique para filtrar, arraste para escolher período, legenda clicável, filtros instantâneos com chips e desfazer.
 - Gerador de relatórios personalizável com exportação em PDF e HTML, modelos salvos e comparação entre containers/indicativos.
 - Exportação em ADIF v3, CSV, Cabrillo e KML (com replay temporal), backup e restauração do banco.

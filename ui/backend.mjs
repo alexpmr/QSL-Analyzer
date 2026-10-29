@@ -54,6 +54,10 @@ export const backend = isDesktop ? {
   factoryReset: () => api.factoryReset(),
   checkUpdate: () => api.checkUpdate(),
   lookup: (url, binary = false) => api.lookup({ url, binary }),
+  downloadUpdate: () => api.downloadUpdate(),
+  installUpdate: () => api.installUpdate(),
+  takeNews: () => api.takeNews(),
+  onUpdateProgress: cb => api.onUpdateProgress(cb),
 } : {
   info: async () => ({ version: null, dataDir: 'IndexedDB (navegador)', portable: false, desktop: false }),
   loadDb: async () => { try { return (await kv('readonly', s => s.get('db'))) || null; } catch { return null; } },
@@ -73,6 +77,10 @@ export const backend = isDesktop ? {
   openExternal: async url => { window.open(url, '_blank', 'noopener'); return true; },
   factoryReset: async () => { await kv('readwrite', s => s.clear()); location.reload(); return true; },
   checkUpdate: async () => null,
+  downloadUpdate: async () => false,
+  installUpdate: async () => false,
+  takeNews: async () => null,
+  onUpdateProgress: () => () => {},
   lookup: async (url, binary = false) => {
     const res = await fetch(url);
     if (!binary) return { status: res.status, text: await res.text() };

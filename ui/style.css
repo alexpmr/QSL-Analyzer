@@ -322,3 +322,5 @@ dialog.noticeCard .okButton{background:#1f2229;color:#fff;border:2px solid #e6b8
 @media(max-width:760px){.lookupCard{flex-direction:column}.savedFilters{margin-left:0}}
 .filterBox>summary>span:first-child::before{content:'▸';display:inline-block;margin-right:7px;color:var(--accent);transition:transform .15s}
 .filterBox[open]>summary>span:first-child::before{transform:rotate(90deg)}
+#newsNotes{white-space:pre-wrap;max-height:300px;overflow:auto;font-family:inherit;font-size:12px;color:var(--muted)}
+#updateProgressBox{margin-top:10px}

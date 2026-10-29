@@ -8,7 +8,7 @@ Itens solicitados e situação na versão 0.1.0.
 | Análise de logs .adif e outros formatos conhecidos | Feito: ADIF, ADX, Cabrillo, EDI, CSV |
 | Banco local com novos uploads incrementais (sem duplicar) | Feito |
 | Configurações: limpar banco por indicativo | Feito: Configurações → Banco de dados |
-| Todos os recursos do QScope (Logs/Containers, Estatísticas, Exportar, Usuário) | Feito: veja o README |
+| Análises completas de logs (Logs, Estatísticas, Exportar, Usuário) | Feito: veja o README |
 | Menu superior com aba Logs (Containers, Upload, Import, Modify, Copy/Filter, Search) | Feito |
 | Aba Estatísticas com as 20 análises | Feito |
 | Aba Relatórios com relatório customizável e exportação em PDF | Feito |
@@ -18,13 +18,13 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
-- **Backlog (29/10/2026): remover toda relação com o QScope.** Tirar qualquer menção ao QScope/QScope.org
-  e ao seu autor do app (textos e ajudas em `src/i18n.mjs`, comentários em `src/stats.mjs`, Sobre/créditos),
-  do README e do CHANGELOG (inclusive notas de versões anteriores) e da página do QSL Analyzer no site
-  (`products.js` e traduções em `assets/js/locales/*`). Reescrever os textos sem a referência, de forma
-  natural. Não registrar em nenhum texto público (changelog, notas da versão, página) que a referência foi
-  retirada.
-- **Backlog (29/10/2026): atualização OTA automática, como nos demais apps PT2VHF.** Hoje o aviso de versão
+(nenhum)
+
+## Resolvidos na 0.3.0 (29/10/2026)
+
+- **[Resolvido] Backlog (29/10/2026): revisão de textos e créditos.** Textos do app, README, CHANGELOG e página do
+  site revisados.
+- **[Resolvido] Backlog (29/10/2026): atualização OTA automática, como nos demais apps PT2VHF.** Hoje o aviso de versão
   nova só abre a página do projeto. Deve seguir o fluxo do Prop Tool/Sat Tool:
   - consultar `https://www.pt2vhf.com/update.php?product=qsl&platform=<plataforma>&kind=<installer|portable>`
     conforme o pacote em uso (instalado ou portátil) e mostrar a versão e as notas;
@@ -35,7 +35,7 @@ Itens solicitados e situação na versão 0.1.0.
     portátil: substituir o .exe com segurança (cópia de recuperação da versão anterior) e reabrir;
   - preservar banco, preferências e credenciais; na primeira abertura após atualizar, mostrar as novidades
     uma única vez; "Depois" adia o aviso até a próxima verificação.
-- **Backlog (29/10/2026): página do QSL Analyzer no site com screenshots e changelog no fim.** A galeria de
+- **[Resolvido] Backlog (29/10/2026): página do QSL Analyzer no site com screenshots e changelog no fim.** A galeria de
   screenshots e o histórico de versões (changelog completo, versão a versão) aparecem no fim da página `/qsl`.
 
 ## Resolvidos na 0.2.0 (29/10/2026)
@@ -99,7 +99,7 @@ Itens solicitados e situação na versão 0.1.0.
   15. **Painéis salvos:** guardar combinações de filtros com nome (ex.: "2 m FM em 2024").
   16. **Relatório anual pronto:** modelo de PDF "Meu ano no rádio" para compartilhar.
 - **[Resolvido] Backlog (29/10/2026): unir "Enviar logs" e "Importar logs" num único "Importar logs".** Acabar com a
-  fila intermediária herdada do QScope (que existe lá porque o arquivo sobe para um servidor): o usuário
+  fila intermediária: o usuário
   escolhe, arrasta ou cola os arquivos e a importação começa na hora, com o popup de progresso (importados,
   ignorados por já existirem, total) e o resumo final. Sem escolha de container (ver item de omitir
   containers); indicativo da estação padrão só quando o log não trouxer STATION_CALLSIGN. Renumerar o
