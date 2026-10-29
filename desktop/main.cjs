@@ -81,6 +81,19 @@ async function start(){
     }catch(e){return {error:e.name==='AbortError'?'Tempo esgotado':e.message};}
     finally{clearTimeout(timer);}
   });
+  // Ficha da estação: dados e foto do QRZ.com / HamQTH (somente esses domínios, HTTPS).
+  handle('lookup',async({url,binary=false})=>{
+    const u=new URL(url);
+    if(u.protocol!=='https:'||!/(^|\.)(qrz\.com|hamqth\.com)$/i.test(u.hostname))throw new Error('Host não permitido: '+u.hostname);
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+    try{
+      const res=await fetch(u,{headers:{'User-Agent':'PT2VHF-QSL-Analyzer/'+app.getVersion()},signal:controller.signal});
+      if(!binary)return {status:res.status,text:await res.text()};
+      const buf=Buffer.from(await res.arrayBuffer());
+      if(buf.length>2*1024*1024)throw new Error('Imagem grande demais');
+      return {status:res.status,base64:buf.toString('base64'),type:res.headers.get('content-type')||'image/jpeg'};
+    }finally{clearTimeout(timer);}
+  });
   handle('encrypt',text=>safeStorage.isEncryptionAvailable()?'enc:'+safeStorage.encryptString(String(text)).toString('base64'):'b64:'+Buffer.from(String(text)).toString('base64'));
   handle('decrypt',text=>{const s=String(text||'');if(s.startsWith('enc:'))return safeStorage.decryptString(Buffer.from(s.slice(4),'base64'));if(s.startsWith('b64:'))return Buffer.from(s.slice(4),'base64').toString('utf8');return '{}';});
   handle('load-cty',()=>readText(ctyFile));

@@ -14,5 +14,6 @@ contextBridge.exposeInMainWorld('qslAnalyzer',{
   saveCty:text=>call('save-cty',text),
   openExternal:url=>call('open-external',url),
   factoryReset:()=>call('factory-reset'),
-  checkUpdate:()=>call('check-update')
+  checkUpdate:()=>call('check-update'),
+  lookup:request=>call('lookup',request)
 });

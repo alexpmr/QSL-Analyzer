@@ -16,7 +16,9 @@
   <main id="view"></main>
   <div id="printRoot"></div>
   <div id="tip" role="tooltip"></div>
-  <dialog id="siteNotice"><div class="dialogHead"><h2 id="siteNoticeTitle"></h2></div><p id="siteNoticeMessage"></p><p><strong>www.pt2vhf.com</strong></p><div class="dialogFoot"><button id="siteNoticeOpen"></button><button id="siteNoticeOk" class="primary" autofocus></button></div></dialog>
+  <dialog id="siteNotice" class="noticeCard"><h2 id="siteNoticeTitle"></h2><p id="siteNoticeMessage"></p><p><a id="siteNoticeLink" href="#"></a></p><div class="dialogFoot"><button id="siteNoticeOk" class="okButton" autofocus></button></div></dialog>
+  <dialog id="progressDialog" class="progressDialog"><h2 id="progressTitle"></h2><div class="progressRow"><progress id="progressBar" max="100" value="0"></progress><span id="progressPct"></span></div><p id="progressLabel" class="help"></p><div id="progressStats" class="progressStats"></div><div class="dialogFoot"><button id="progressGo" class="hidden"></button><button id="progressClose" class="primary hidden"></button></div></dialog>
+  <dialog id="entityDialog" class="entityDialog"><div id="entityBody"></div></dialog>
   <dialog id="updateNotice"><div class="dialogHead"><h2 id="updateNoticeTitle"></h2></div><p id="updateNoticeMessage"></p><pre id="updateNoticeNotes"></pre><div class="dialogFoot"><button id="updateNoticeLater"></button><button id="updateNoticeOpen" class="primary"></button></div></dialog>
   <div id="toast" role="status"></div>
   <script type="module" src="app.mjs"></script>

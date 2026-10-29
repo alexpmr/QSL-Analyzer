@@ -16,6 +16,7 @@ jobs:
     timeout-minutes: 15
     outputs:
       version: ${{ steps.version.outputs.value }}
+      matrix: ${{ steps.platforms.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,21 +30,20 @@ jobs:
       - name: Read application version
         id: version
         run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      # Plataformas desta versão em .github/build-platforms.json (ex.: ["windows"] durante os ajustes).
+      - name: Select build platforms
+        id: platforms
+        run: |
+          node -e "
+            const all={windows:{os:'windows-latest',script:'dist:win',name:'windows'},linux:{os:'ubuntu-latest',script:'dist:linux',name:'linux'},macos:{os:'macos-latest',script:'dist:mac',name:'macos'}};
+            const list=require('./.github/build-platforms.json');
+            console.log('matrix='+JSON.stringify({include:list.map(p=>all[p])}));
+          " >> "$GITHUB_OUTPUT"
   build:
     needs: test
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            script: dist:win
-            name: windows
-          - os: ubuntu-latest
-            script: dist:linux
-            name: linux
-          - os: macos-latest
-            script: dist:mac
-            name: macos
+      matrix: ${{ fromJSON(needs.test.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
@@ -96,7 +96,7 @@ jobs:
         run: |
           awk -v v="$VERSION" '$0 ~ "^## "v" - " {p=1} p && /^## / && $0 !~ "^## "v" - " {exit} p' CHANGELOG.md > dist/release-notes.md
           test -s dist/release-notes.md
-          cd dist && sha256sum *.exe *.AppImage *.deb *.tar.gz *.dmg > SHA256SUMS.txt && cat SHA256SUMS.txt
+          cd dist && sha256sum $(ls *.exe *.AppImage *.deb *.tar.gz *.dmg 2>/dev/null) > SHA256SUMS.txt && cat SHA256SUMS.txt
       - name: Publish GitHub release (origin of the files served by www.pt2vhf.com)
         env:
           GH_TOKEN: ${{ github.token }}
@@ -110,7 +110,10 @@ jobs:
             echo "A newer main commit exists; its build will publish."
             exit 0
           fi
-          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --target "$RELEASE_COMMIT" --title "PT2VHF QSL Analyzer $RELEASE_TAG" --notes-file release-notes.md
+          # Uma release publicada nunca é sobrescrita: os pacotes já estão no site com SHA-256 fixo.
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG já existe; nada a enviar (aumente a versão para publicar)."
+            exit 0
           fi
-          gh release upload "$RELEASE_TAG" ./*.exe ./*.AppImage ./*.deb ./*.tar.gz ./*.dmg SHA256SUMS.txt --clobber
+          gh release create "$RELEASE_TAG" --target "$RELEASE_COMMIT" --title "PT2VHF QSL Analyzer $RELEASE_TAG" --notes-file release-notes.md
+          gh release upload "$RELEASE_TAG" $(ls *.exe *.AppImage *.deb *.tar.gz *.dmg 2>/dev/null) SHA256SUMS.txt

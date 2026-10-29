@@ -195,9 +195,21 @@ function wrap(title, body, after = '') {
 }
 
 // Tabela HTML simples (dados exportáveis ficam separados no objeto de resultado).
-export function table(head, rows, { numeric = [], max = 2000, className = '' } = {}) {
+// links: { índiceDaColuna: tipo } transforma a célula em atalho para a ficha (call, country, grid, cont, pfx, cqz, ituz, station).
+export function entityLink(type, value, label = value) {
+  if (value === null || value === undefined || value === '' || value === '—') return esc(label ?? '');
+  return `<a class="ent" href="#" data-entity="${esc(type + ':' + value)}">${esc(label)}</a>`;
+}
+
+export function table(head, rows, { numeric = [], max = 2000, className = '', links = {} } = {}) {
   const num = new Set(numeric);
-  const body = rows.slice(0, max).map(r => `<tr>${r.map((c, i) => `<td${num.has(i) ? ' class="num"' : ''}>${c === null || c === undefined ? '' : typeof c === 'object' && 'html' in c ? c.html : esc(fmtCell(c))}</td>`).join('')}</tr>`).join('');
+  const cell = (c, i) => {
+    if (c === null || c === undefined) return '';
+    if (typeof c === 'object' && 'html' in c) return c.html;
+    if (links[i] && c !== '') return entityLink(links[i], c, fmtCell(c));
+    return esc(fmtCell(c));
+  };
+  const body = rows.slice(0, max).map(r => `<tr>${r.map((c, i) => `<td${num.has(i) ? ' class="num"' : ''}>${cell(c, i)}</td>`).join('')}</tr>`).join('');
   const more = rows.length > max ? `<tr><td colspan="${head.length}" class="more">+ ${rows.length - max}</td></tr>` : '';
   return `<div class="tableWrap ${className}"><table><thead><tr>${head.map((h, i) => `<th${num.has(i) ? ' class="num"' : ''}>${esc(h)}</th>`).join('')}</tr></thead><tbody>${body}${more}</tbody></table></div>`;
 }

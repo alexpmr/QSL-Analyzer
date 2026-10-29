@@ -1,4 +1,4 @@
-// Banco local de contatos: containers, deduplicação incremental, filtros e manutenção.
+// Banco local de contatos: deduplicação incremental, filtros e manutenção (container único interno).
 import { modeGroup, bandFromFreq, normalizeMode } from './bands.mjs';
 import { lookup, entityByDxcc, wpxPrefix } from './cty.mjs';
 
@@ -19,8 +19,30 @@ export function migrate(raw) {
   if (!Array.isArray(db.qsos)) db.qsos = [];
   if (!Array.isArray(db.activity)) db.activity = [];
   if (!Array.isArray(db.uploads)) db.uploads = [];
-  db.nextId = Math.max(db.nextId || 1, ...db.qsos.map(q => q.id + 1), 1);
+  if (!db.lookup || typeof db.lookup !== 'object') db.lookup = {};
+  if (!db.platforms || typeof db.platforms !== 'object') db.platforms = {};
+  db.nextId = db.qsos.reduce((m, q) => Math.max(m, q.id + 1), db.nextId || 1);
+  unifyContainers(db);
   return db;
+}
+
+// Desde a 0.2.0 os containers não aparecem: tudo fica num único container interno, sem QSOs duplicados.
+export function unifyContainers(db) {
+  const extra = db.containers.length > 1 || db.qsos.some(q => q.c !== 'main');
+  db.containers = [{ id: 'main', name: 'Log principal', notes: '', created: db.containers[0]?.created || Date.now() }];
+  if (!extra) return 0;
+  const seen = new Map(), keep = [];
+  let removed = 0;
+  for (const q of [...db.qsos].sort((a, b) => a.ts - b.ts || a.id - b.id)) {
+    const k = dedupeKey(q), existing = seen.get(k) || seen.get(dedupeKey(q, -1)) || seen.get(dedupeKey(q, 1));
+    if (existing) { mergeInto(existing, q); removed++; continue; }
+    q.c = 'main';
+    seen.set(k, q);
+    keep.push(q);
+  }
+  db.qsos = keep;
+  if (removed) logActivity(db, 'merge-containers', `-${removed}`);
+  return removed;
 }
 
 export function logActivity(db, type, detail) {
@@ -98,27 +120,42 @@ function mergeInto(target, src) {
   return changed;
 }
 
-// Importa somente QSOs que ainda não existem no container (mesma estação, indicativo, banda, grupo de modo e minuto ±1).
-export function importQsos(db, qsos, containerId, { mergeQsl = true, source = '' } = {}) {
+// Importa somente QSOs que ainda não existem (mesma estação, indicativo, banda, grupo de modo e minuto ±1).
+// O importador é incremental para permitir mostrar o progresso em lotes.
+export function createImporter(db, containerId = 'main', { mergeQsl = true } = {}) {
   if (!db.containers.some(c => c.id === containerId)) throw new Error('NOT_FOUND');
   const index = new Map();
   for (const q of db.qsos) if (q.c === containerId) index.set(dedupeKey(q), q);
-  let added = 0, skipped = 0, merged = 0;
+  const stats = { added: 0, skipped: 0, merged: 0 };
   const now = Date.now();
-  for (const raw of qsos) {
-    const existing = index.get(dedupeKey(raw)) || index.get(dedupeKey(raw, -1)) || index.get(dedupeKey(raw, 1));
-    if (existing) {
-      skipped++;
-      if (mergeQsl && mergeInto(existing, raw)) merged++;
-      continue;
-    }
-    const q = { ...raw, id: db.nextId++, c: containerId, src: source, imported: now };
-    db.qsos.push(q);
-    index.set(dedupeKey(q), q);
-    added++;
-  }
-  logActivity(db, 'import', `${source || '—'} → ${containerId}: +${added}, =${skipped}, ↻${merged}`);
-  return { added, skipped, merged };
+  return {
+    stats,
+    add(qsos, source = '') {
+      for (const raw of qsos) {
+        const existing = index.get(dedupeKey(raw)) || index.get(dedupeKey(raw, -1)) || index.get(dedupeKey(raw, 1));
+        if (existing) {
+          stats.skipped++;
+          if (mergeQsl && mergeInto(existing, raw)) stats.merged++;
+          continue;
+        }
+        const q = { ...raw, id: db.nextId++, c: containerId, src: raw.src || source, imported: now };
+        db.qsos.push(q);
+        index.set(dedupeKey(q), q);
+        stats.added++;
+      }
+      return stats;
+    },
+    finish(source = '') {
+      logActivity(db, 'import', `${source || '—'}: +${stats.added}, =${stats.skipped}, ↻${stats.merged}`);
+      return { ...stats };
+    },
+  };
+}
+
+export function importQsos(db, qsos, containerId = 'main', { mergeQsl = true, source = '' } = {}) {
+  const importer = createImporter(db, containerId, { mergeQsl });
+  importer.add(qsos, source);
+  return importer.finish(source);
 }
 
 export function stations(db, containerId = null) {
@@ -186,6 +223,20 @@ export function copyFilter(db, sourceIds, name, filter = {}, { removeDupes = fal
   for (const q of list) db.qsos.push({ ...q, id: db.nextId++, c: target.id, extra: { ...(q.extra || {}) } });
   logActivity(db, 'copy-filter', `${[...sources].join('+')} → ${target.name}: ${list.length}`);
   return { container: target, count: list.length };
+}
+
+export function removeDupesFiltered(db, filter = {}) {
+  const ids = new Set(applyFilter(db.qsos, filter).map(q => q.id)), seen = new Set(), keep = [];
+  let removed = 0;
+  for (const q of [...db.qsos].sort((a, b) => a.ts - b.ts)) {
+    if (!ids.has(q.id)) { keep.push(q); continue; }
+    const k = contestDupeKey(q);
+    if (seen.has(k)) { removed++; continue; }
+    seen.add(k); keep.push(q);
+  }
+  db.qsos = keep;
+  logActivity(db, 'remove-dupes', `-${removed}`);
+  return removed;
 }
 
 export function removeDupes(db, containerId) {

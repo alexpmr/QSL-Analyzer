@@ -238,3 +238,87 @@ dialog::backdrop{background:#020710b9}
 dialog .dialogHead h2{margin:0 0 10px;font-size:21px}
 dialog .dialogFoot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 #updateNoticeNotes{white-space:pre-wrap;max-height:220px;overflow:auto;font-family:inherit;font-size:12px;color:var(--muted)}
+
+/* 0.2.0: matriz DXCC alinhada (todas as colunas centralizadas, exceto a entidade). */
+.matrix th,.matrix td{text-align:center}
+.matrix th:first-child,.matrix td:first-child{text-align:left}
+/* Atalhos para a ficha da entidade. */
+a.ent{color:var(--accent);text-decoration:none;border-bottom:1px dotted transparent;cursor:pointer}
+a.ent:hover{border-bottom-color:var(--accent)}
+
+/* 0.2.0 — filtros recolhidos, sub-abas, resumo, diplomas, saúde do log, fichas e diálogos. */
+.filterBox{border:1px solid var(--border);border-radius:10px;background:var(--panel2);margin:12px 0;padding:0}
+.filterBox>summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 14px;list-style:none;font-size:12px;color:var(--text)}
+.filterBox>summary::-webkit-details-marker{display:none}
+.filterBox>summary>span:first-child{font-weight:600;white-space:nowrap}
+.filterBox>summary b{display:inline-block;min-width:18px;text-align:center;padding:1px 6px;border-radius:9px;background:var(--selBg);color:var(--selText);font-size:11px}
+.filterBox>summary .biHint{margin:0;font-size:11px;color:var(--muted)}
+.filterBox[open]>summary{border-bottom:1px solid var(--border)}
+.filterBox .filterBar{border:0;margin:0;background:transparent}
+.chips.inline{margin:0}
+.savedFilters{display:flex;gap:6px;align-items:flex-end;margin-left:auto}
+.savedFilters select,.savedFilters button{font-size:12px;padding:7px}
+.subTabs{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px}
+.subTabs button{font-size:12px;padding:6px 11px;border-radius:7px 7px 0 0}
+.summary{border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;background:var(--panel2);padding:12px 16px;margin:10px 0 14px}
+.summary small{font-size:9px;letter-spacing:1.6px;color:var(--accent);text-transform:uppercase}
+.summary p{margin:6px 0 0;line-height:1.8;font-size:13px}
+.award{margin:10px 0}
+.awardHead{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.awardHead span{color:var(--muted)}
+.awardBar{position:relative;height:10px;border-radius:5px;background:var(--cellEmpty);overflow:hidden}
+.awardBar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.awardBar i.w{background:#9ec5f4;opacity:.55}
+.awardBar i.c{background:#2a78d6}
+.awardGrid{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 14px}
+.awardGrid span{min-width:38px;text-align:center;padding:4px 6px;border-radius:5px;font-size:11px;border:1px solid var(--border);color:var(--muted)}
+.awardGrid span.w{border-color:#c98500;color:var(--warn)}
+.awardGrid span.c{background:#123d2d;border-color:#338662;color:#82edb6}
+:root[data-theme=light] .awardGrid span.c{background:#d8f3ea;color:#0d5c48}
+.healthCards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin:12px 0}
+.healthCard{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:12px}
+.healthCard strong{font-size:20px}
+.healthCard span{font-size:11px;color:var(--muted)}
+.healthCard.bad strong{color:var(--warn)}
+.notice.ok{border-color:#338662;background:#123d2d;color:#82edb6}
+.compareResult{margin-top:12px;border-top:1px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.compareResult button{align-self:flex-start}
+dialog.entityDialog{width:1100px;max-width:96vw;max-height:92vh;padding:0;overflow:hidden}
+#entityBody{padding:20px 24px;max-height:92vh;overflow:auto}
+.entityHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.entityHead small{font-size:9px;letter-spacing:1.6px;color:var(--accent);text-transform:uppercase}
+.entityHead h2{margin:2px 0 8px;font-size:24px}
+.entityActions{display:flex;gap:6px;flex-wrap:wrap}
+.entityList{line-height:2}
+.entityList small{color:var(--muted)}
+button.back{font-size:12px;padding:5px 10px;margin-bottom:8px}
+.lookupCard{display:flex;gap:18px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;background:var(--panel2);padding:14px;margin:10px 0}
+.lookupCard img{width:150px;max-height:190px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
+.lookupCard h3{margin:0 0 4px;font-size:18px}
+.lookupCard.empty{flex-direction:column;gap:6px}
+.lookupFields{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 16px;margin:8px 0}
+.lookupFields div{display:flex;flex-direction:column}
+.lookupFields small{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.lookupFields span{font-size:13px;overflow-wrap:anywhere}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{font-size:10px;padding:3px 8px;border-radius:10px;border:1px solid var(--selBorder);background:var(--selBg);color:var(--selText)}
+.lookupActions{display:flex;gap:6px;flex-wrap:wrap}
+.lookupActions button{font-size:12px;padding:6px 10px}
+dialog.progressDialog{width:520px}
+dialog.progressDialog h2{margin:0 0 12px;font-size:19px}
+.progressRow{display:flex;align-items:center;gap:10px}
+.progressRow progress{flex:1;height:14px;accent-color:#69e1c2}
+.progressStats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:10px}
+.progressStats div{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--panel2)}
+.progressStats small{display:block;font-size:10px;color:var(--muted)}
+.progressStats strong{font-size:18px;font-variant-numeric:tabular-nums}
+/* Aviso do site oficial no modelo do Mesh Analyzer. */
+dialog.noticeCard{width:560px;background:#2a2d36;color:#eef0f4;border:1px solid #6b7c8f;border-radius:16px;padding:26px 28px 22px}
+dialog.noticeCard h2{margin:0 0 14px;font-size:21px;font-weight:700}
+dialog.noticeCard p{margin:0 0 14px;font-size:14px;line-height:1.6}
+dialog.noticeCard a{color:#6fc8ff;font-weight:600;text-decoration:underline}
+dialog.noticeCard .okButton{background:#1f2229;color:#fff;border:2px solid #e6b800;border-radius:8px;padding:8px 14px;font-weight:600}
+.span{grid-column:1/-1}
+@media(max-width:760px){.lookupCard{flex-direction:column}.savedFilters{margin-left:0}}
+.filterBox>summary>span:first-child::before{content:'▸';display:inline-block;margin-right:7px;color:var(--accent);transition:transform .15s}
+.filterBox[open]>summary>span:first-child::before{transform:rotate(90deg)}

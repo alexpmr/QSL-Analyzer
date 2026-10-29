@@ -53,6 +53,7 @@ export const backend = isDesktop ? {
   openExternal: url => api.openExternal(url),
   factoryReset: () => api.factoryReset(),
   checkUpdate: () => api.checkUpdate(),
+  lookup: (url, binary = false) => api.lookup({ url, binary }),
 } : {
   info: async () => ({ version: null, dataDir: 'IndexedDB (navegador)', portable: false, desktop: false }),
   loadDb: async () => { try { return (await kv('readonly', s => s.get('db'))) || null; } catch { return null; } },
@@ -72,4 +73,12 @@ export const backend = isDesktop ? {
   openExternal: async url => { window.open(url, '_blank', 'noopener'); return true; },
   factoryReset: async () => { await kv('readwrite', s => s.clear()); location.reload(); return true; },
   checkUpdate: async () => null,
+  lookup: async (url, binary = false) => {
+    const res = await fetch(url);
+    if (!binary) return { status: res.status, text: await res.text() };
+    const buf = new Uint8Array(await res.arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+    return { status: res.status, base64: btoa(bin), type: res.headers.get('content-type') || 'image/jpeg' };
+  },
 };

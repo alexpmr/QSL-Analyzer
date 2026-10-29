@@ -12,9 +12,11 @@ Aplicativo para **Windows, Linux e macOS** que **analisa os contatos de radioama
 - **Vários indicativos de estação.** Cada QSO guarda o seu `STATION_CALLSIGN`. Se você enviar dois ADIFs de duas estações diferentes, em **Configurações → Banco de dados** pode apagar só o indicativo que quiser, em todos os containers ou em um só.
 - **Formatos:** ADIF 2/3 (.adi), ADX (XML), Cabrillo 2/3, EDI REG1TEST (concursos VHF/UHF) e CSV com cabeçalho. Um ADIF também pode ser colado direto na tela.
 - **Plataformas online:** baixa e importa direto do **QRZ.com Logbook** (chave de API), do **ARRL LoTW** (confirmações), do **eQSL.cc** (Inbox) e do **Club Log**. As credenciais só ficam guardadas se você pedir, criptografadas pelo Windows.
-- **Menu Logs**, no mesmo fluxo do QScope: 1→ Gerenciar containers · 2→ Enviar logs · 3→ Importar logs · 4→ Modificar logs (atualizar DXCC/zonas pelo CTY.DAT, corrigir banda pela frequência, renomear modos, definir estação/operador, mover) · 5→ Copiar/filtrar logs · Busca no log (curingas `*` e `?`) · Importar de plataformas.
+- **Menu Logs:** Importar logs (em um passo, com popup de progresso) · Importar de plataformas (com conferência e sincronização automática) · Modificar logs · Saúde do log · Busca no log (curingas `*` e `?`) · Exportar logs · Backup do banco.
+- **Fichas clicáveis:** indicativos, países/DXCC, quadrículas, prefixos, zonas, continentes e estações abrem uma ficha com todos os seus contatos; a do indicativo mostra também foto e dados do QRZ.com/HamQTH.
 - **Menu Estatísticas** com as 20 análises do QScope: Estatísticas básicas, Estações trabalhadas, Mapas de atividade, Bandas/modos, Primeiro DXCC trabalhado, Trocas de banda, Pausas, Gráficos de QSOs, de duplicados, de pontos e de zonas, DXCC/locator, Arquivos KML (mapas), Azimutes/distâncias, Gráficos de tempo, Gráficos históricos, Tempo de operação, Taxa de QSOs, Taxas máximas e Taxas médias.
-- **Aba QSL:** confirmações por papel, LoTW e eQSL e matriz **DXCC × banda** trabalhado (W) / confirmado (C).
+- **Aba QSL:** confirmações por papel, LoTW e eQSL, matriz **DXCC × banda**, **Diplomas** (DXCC, WAZ, WAS, WPX, VUCC, IOTA), **Faltam confirmar** e **Entidades raras**.
+- **Mais análises:** resumo da atividade no Dashboard, Propagação, Comparar períodos, Estações frequentes, Novos indicativos e Concursos.
 - **Gráficos interativos no estilo BI.** Clique numa barra, célula, ponto do mapa ou rótulo para filtrar a tela inteira, arraste sobre um gráfico de linha para escolher um período e clique na legenda para ligar ou desligar séries. Os filtros se aplicam na hora e aparecem como chips removíveis, com botão de desfazer. Gráficos animados com dicas ao passar o mouse.
 - **Relatórios:** gerador personalizável. Você escolhe as seções, a ordem, os parâmetros de cada uma, a capa, o papel (A4/Carta/Ofício/A3), a orientação, as tabelas (todas, só a principal ou nenhuma), os gráficos, a quebra de página por seção, cores claras para impressão e o rodapé. A prévia mostra exatamente o que vai para o **PDF**, que também pode sair em HTML. Os modelos podem ser salvos. Há ainda a aba **Comparar** para ver containers ou indicativos lado a lado.
 - **Exportação:** ADIF v3, CSV, Cabrillo 3.0 e KML/Google Earth (entidades, quadrículas, linhas de QSO e replay temporal). Cada página de estatística exporta CSV, TXT, PNG e PDF. Também há backup e restauração completos do banco. A exportação e o backup ficam no menu **Logs**.
@@ -34,8 +36,10 @@ Downloads, novas versões e atualizações são distribuídos **somente pelo sit
 | Sistema | Pacote |
 |---|---|
 | Windows 10/11 x64 | Instalador (.exe) ou portátil (.exe, sem instalação) |
-| Linux x64 | AppImage, .deb (Ubuntu/Debian/Mint) ou .tar.gz |
-| macOS | .dmg para Apple Silicon (arm64) e Intel (x64) |
+| Linux x64 | AppImage, .deb ou .tar.gz (temporariamente só até a 0.1.0) |
+| macOS | .dmg Apple Silicon e Intel (temporariamente só até a 0.1.0) |
+
+As plataformas geradas a cada versão ficam em `.github/build-platforms.json`.
 
 No macOS o aplicativo ainda não é assinado pela Apple: na primeira abertura, clique com o botão direito no app e escolha **Abrir**. Se aparecer a mensagem "está danificado", rode `xattr -cr "/Applications/PT2VHF QSL Analyzer.app"` no Terminal.
 

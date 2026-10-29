@@ -1,6 +1,8 @@
 // Páginas de estatística: cada uma declara parâmetros e um renderizador usado na tela e nos relatórios.
 import * as S from '../src/stats.mjs';
-import { bars, stacked, lines, heatGrid, rose, worldMap, table, tile, esc } from './charts.mjs';
+import { bars, stacked, lines, heatGrid, rose, worldMap, table, tile, esc, entityLink } from './charts.mjs';
+import * as A from '../src/awards.mjs';
+import * as I from '../src/insights.mjs';
 import { gridToLatLon } from '../src/geo.mjs';
 
 export const fmtDate = ts => (ts === null || ts === undefined ? '—' : new Date(ts).toISOString().slice(0, 10));
@@ -49,7 +51,7 @@ export const STAT_PAGES = [
       if (p.sort === 'first') list.sort((a, b) => a.first - b.first);
       const head = [t('call'), t('qsos'), t('bands'), t('modes'), t('slots'), t('dupes'), t('country'), t('cont'), t('firstQso'), t('lastQso'), 'QSL'];
       const rows = list.map(s => [s.call, s.qsos, s.bands.join(' '), s.modes.join(' '), s.slots, s.dupes, s.country, s.cont, fmtDateTime(s.first), fmtDateTime(s.last), s.confirmed ? '✓' : '']);
-      return { html: `<p class="help">${t('stationsSummary', { n: list.length })}</p>` + table(head, rows, { numeric: [1, 4, 5], max: ctx.report ? 300 : 3000 }), tables: [{ title: t('page_stations'), head, rows }] };
+      return { html: `<p class="help">${t('stationsSummary', { n: list.length })}</p>` + table(head, rows, { numeric: [1, 4, 5], max: ctx.report ? 300 : 3000, links: { 0: 'call', 6: 'country', 7: 'cont' } }), tables: [{ title: t('page_stations'), head, rows }] };
     },
   },
   {
@@ -88,7 +90,7 @@ export const STAT_PAGES = [
       const rows = list.map(x => [x.n, fmtDateTime(x.ts), x.call, x.band, x.mode, x.country, x.dxcc ?? '', x.cont]);
       const cum = list.map((x, i) => [x.ts, i + 1]);
       const chart = cum.length > 1 ? lines(cum.map(c => c[0]), [{ name: 'DXCC', values: cum.map(c => c[1]) }], { title: t('dxccCumulative'), xFormat: v => fmtDate(v), area: true, width: 1240 }) : '';
-      return { html: chart + table(head, rows, { numeric: [0, 6] }), tables: [{ title: t('page_dxccfirst'), head, rows }] };
+      return { html: chart + table(head, rows, { numeric: [0, 6], links: { 2: 'call', 5: 'country', 7: 'cont' } }), tables: [{ title: t('page_dxccfirst'), head, rows }] };
     },
   },
   {
@@ -113,7 +115,7 @@ export const STAT_PAGES = [
       const head = [t('group'), t('start'), t('end'), t('duration'), t('lastBefore'), t('firstAfter')];
       const rows = list.map(x => [x.group === '*' ? '' : x.group, fmtDateTime(x.start), fmtDateTime(x.end), fmtDur(x.duration), x.before, x.after]);
       const total = list.reduce((s, x) => s + x.duration, 0);
-      return { html: `<div class="tiles">${tile(t('pausesCount'), list.length)}${tile(t('pausesTotal'), fmtDur(total))}</div>` + table(head, rows), tables: [{ title: t('page_pauses'), head, rows }] };
+      return { html: `<div class="tiles">${tile(t('pausesCount'), list.length)}${tile(t('pausesTotal'), fmtDur(total))}</div>` + table(head, rows, { links: { 4: 'call', 5: 'call' } }), tables: [{ title: t('page_pauses'), head, rows }] };
     },
   },
   {
@@ -136,7 +138,7 @@ export const STAT_PAGES = [
       return {
         html: `<div class="tiles">${tile(t('dupes'), d.total)}</div>` + twoCol(bars(pairs(d.byCall.slice(0, p.top)), { title: t('topDupeStations'), drill: 'call' }), bars(pairs(d.byDxcc.slice(0, p.top)), { title: t('topDupeDxcc'), colorIndex: 1, drill: 'countries' }))
           + twoCol(bars(pairs(d.byBand), { title: t('dupesPerBand'), colorIndex: 2, drill: 'bands' }), bars(pairs(d.byMode), { title: t('dupesPerMode'), colorIndex: 3, drill: 'modes' })) + twoCol(bars(pairs(d.byCont), { title: t('dupesPerCont'), colorIndex: 4, drill: 'conts' }), bars(pairs(d.byOperator), { title: t('dupesPerOperator'), colorIndex: 6, drill: 'operators' }))
-          + table(listHead, listRows, { max: ctx.report ? 100 : 2000 }),
+          + table(listHead, listRows, { max: ctx.report ? 100 : 2000, links: { 1: 'call' } }),
         tables: [{ title: t('page_dupes'), head: listHead, rows: listRows }, { title: t('topDupeStations'), head: [t('call'), t('dupes')], rows: d.byCall }],
       };
     },
@@ -188,7 +190,7 @@ export const STAT_PAGES = [
       if (p.layer === 'grids') points = S.groupCount(qsos, S.grid4).map(([g, n]) => { const c = gridToLatLon(g); return c && { ...c, value: n, rect: true, label: `${g}: ${n}`, drill: 'grids=' + g }; }).filter(Boolean);
       const rows = points.map(x => [x.label.split(':')[0], x.value, x.lat.toFixed(2), x.lon.toFixed(2)]);
       return {
-        html: worldMap(points, { title: t('mapOf', { layer: t('layer_' + p.layer) }), home: ctx.home, lines: p.layer === 'lines' }) + `<div class="kmlActions" data-kml-actions></div>` + (ctx.report ? '' : table([t('name'), t('qsos'), 'Lat', 'Lon'], rows, { numeric: [1] })),
+        html: worldMap(points, { title: t('mapOf', { layer: t('layer_' + p.layer) }), home: ctx.home, lines: p.layer === 'lines' }) + `<div class="kmlActions" data-kml-actions></div>` + (ctx.report ? '' : table([t('name'), t('qsos'), 'Lat', 'Lon'], rows, { numeric: [1], links: { 0: p.layer === 'grids' ? 'grid' : 'country' } })),
         tables: [{ title: t('page_kml'), head: [t('name'), t('qsos'), 'Lat', 'Lon'], rows }],
       };
     },
@@ -202,7 +204,7 @@ export const STAT_PAGES = [
       const longHead = [t('call'), t('date'), t('band'), t('mode'), 'km', 'Az', t('locator'), t('country')], longRows = r.longest.map(x => [x.call, fmtDateTime(x.ts), x.band, x.mode, x.km, x.az, x.grid, x.country]);
       const note = !ctx.home && r.skipped ? `<p class="notice">${esc(t('needHome'))}</p>` : '';
       return {
-        html: note + `<div class="tiles">${tile(t('measured'), r.measured)}${tile(t('withoutPosition'), r.skipped)}${tile(t('longest'), r.longest[0] ? r.longest[0].km.toLocaleString() + ' km' : '—', r.longest[0]?.call || '')}</div>` + twoCol(bars(dist, { title: t('qsosPerDistance'), unit: '' }), rose(r.azimuth, { title: t('qsosPerAzimuth') })) + `<h3>${esc(t('longestQsos'))}</h3>` + table(longHead, longRows, { numeric: [4, 5] }),
+        html: note + `<div class="tiles">${tile(t('measured'), r.measured)}${tile(t('withoutPosition'), r.skipped)}${tile(t('longest'), r.longest[0] ? r.longest[0].km.toLocaleString() + ' km' : '—', r.longest[0]?.call || '')}</div>` + twoCol(bars(dist, { title: t('qsosPerDistance'), unit: '' }), rose(r.azimuth, { title: t('qsosPerAzimuth') })) + `<h3>${esc(t('longestQsos'))}</h3>` + table(longHead, longRows, { numeric: [4, 5], links: { 0: 'call', 6: 'grid', 7: 'country' } }),
         tables: [{ title: t('qsosPerDistance'), head: ['km', t('qsos')], rows: dist }, { title: t('qsosPerAzimuth'), head: ['Az', t('qsos')], rows: az }, { title: t('longestQsos'), head: longHead, rows: longRows }],
       };
     },
@@ -275,6 +277,90 @@ export const STAT_PAGES = [
       return { html: bars(list.map(x => [x.key, x.rate]), { title: t('avgRatePer', { dim: t('dim_' + p.dim) }), unit: ' /h', drill: DIM_FILTER[p.dim], width: 1240 }) + table(head, rows, { numeric: [1, 3] }), tables: [{ title: t('page_avgrates'), head, rows }] };
     },
   },
+  {
+    id: 'propagation', params: [{ id: 'band', type: 'select', optionsFn: qsos => ['', ...S.sortKeys('band', [...S.distinct(qsos, q => q.band)])], default: '', label: 'band' }, { id: 'esKm', type: 'number', min: 100, max: 5000, default: 500, label: 'openingKm' }],
+    render(ctx, p) {
+      const { t } = ctx, r = I.propagation(ctx.qsos, { band: p.band, home: ctx.home, esKm: Number(p.esKm) });
+      const bandLabel = p.band || t('allBands');
+      const cols = r.months, distRows = r.distance.map(d => [d.month, d.n, d.avg, d.max, d.dir]);
+      const openRows = r.openings.map(o => [o.day, o.band, o.qsos.length, o.maxKm, { html: o.qsos.slice(0, 8).map(l => entityLink('call', l.q.call)).join(' ') }]);
+      return {
+        html: `<p class="help">${esc(t('propagationNote'))}</p>`
+          + heatGrid(r.byCont.map(x => ({ key: x.key, values: x.values })), cols, { title: t('propContMonth', { band: bandLabel }), rowDrill: 'conts' })
+          + heatGrid(r.byCountry.map(x => ({ key: x.key, values: x.values })), cols, { title: t('propCountryMonth', { band: bandLabel }), rowDrill: 'countries' })
+          + heatGrid(r.hourMonth, cols, { title: t('propHourMonth', { band: bandLabel }), labelEvery: null })
+          + lines(r.distance.map(d => Date.parse(d.month + '-01T00:00:00Z')), [{ name: t('avgKm'), values: r.distance.map(d => d.avg) }, { name: t('maxKm'), values: r.distance.map(d => d.max) }], { title: t('propDistance', { band: bandLabel }), xFormat: v => new Date(v).toISOString().slice(0, 7), width: 1240 })
+          + table([t('month'), t('measured'), t('avgKm'), t('maxKm'), t('mainDirection')], distRows, { numeric: [1, 2, 3] })
+          + `<h3>${esc(t('openingsTitle', { km: p.esKm }))}</h3>` + (openRows.length ? table([t('date'), t('band'), t('qsos'), t('maxKm'), t('stations')], openRows, { numeric: [2, 3] }) : `<p class="help">${esc(t('noOpenings'))}</p>`)
+          + `<h3>${esc(t('yearCompare'))}</h3>` + table([t('year'), t('qsos'), 'DXCC', t('continents')], r.years.map(y => [y.year, y.qsos, y.dxcc, y.conts]), { numeric: [1, 2, 3] }),
+        tables: [{ title: t('propContMonth', { band: bandLabel }), head: [t('cont'), ...cols], rows: r.byCont.map(x => [x.key, ...x.values]) }, { title: t('propCountryMonth', { band: bandLabel }), head: [t('country'), ...cols], rows: r.byCountry.map(x => [x.key, ...x.values]) }, { title: t('propDistance', { band: bandLabel }), head: [t('month'), t('measured'), t('avgKm'), t('maxKm'), t('mainDirection')], rows: distRows }],
+      };
+    },
+  },
+  {
+    id: 'periods', params: [{ id: 'preset', type: 'select', options: ['yearVsLast', 'lastYearVsBefore', 'monthVsLastYear', 'monthVsPrevious'], default: 'yearVsLast', label: 'comparison' }],
+    render(ctx, p) {
+      const { t } = ctx, pr = I.periodPresets(ctx.now)[p.preset], r = I.comparePeriods(ctx.qsos, pr.a, pr.b);
+      const la = `${fmtDate(pr.a[0])} → ${fmtDate(pr.a[1] - 1)}`, lb = `${fmtDate(pr.b[0])} → ${fmtDate(pr.b[1] - 1)}`;
+      const delta = (a, b) => (b ? `${a >= b ? '+' : ''}${Math.round(((a - b) / b) * 100)}%` : a ? '+' : '—');
+      const keys = [['qsos', 'qsos'], ['uniqueCalls', 'calls'], ['dxccEntities', 'dxcc'], ['locators', 'grids'], ['bands', 'bands'], ['confirmedQsos', 'confirmed'], ['maxRate60', 'max60']];
+      const rows = keys.map(([label, k]) => [t(label), r.a[k], r.b[k], delta(r.a[k], r.b[k])]);
+      rows.push([t('operatingTime'), fmtDur(r.a.operatingMs), fmtDur(r.b.operatingMs), delta(r.a.operatingMs, r.b.operatingMs)]);
+      const head = [t('metric'), la, lb, t('change')];
+      return {
+        html: `<div class="tiles">${tile(t('newCallsIn'), r.newCalls)}${tile(t('newDxccIn'), r.newDxcc.length)}${tile(t('newGridsIn'), r.newGrids)}</div>` + table(head, rows, { numeric: [1, 2, 3] })
+          + twoCol(stacked(r.perBand.map(x => x.band), [{ name: la, values: r.perBand.map(x => x.a) }, { name: lb, values: r.perBand.map(x => x.b) }], { title: t('qsosPerBand') }), stacked(r.perMode.map(x => x.mode), [{ name: la, values: r.perMode.map(x => x.a) }, { name: lb, values: r.perMode.map(x => x.b) }], { title: t('qsosPerMode') }))
+          + `<h3>${esc(t('newDxccList'))}</h3>` + table([t('date'), t('country'), t('call'), t('band'), t('mode')], r.newDxcc.map(q => [fmtDateTime(q.ts), q.country, q.call, q.band, q.mode]), { links: { 1: 'country', 2: 'call' } }),
+        tables: [{ title: t('page_periods'), head, rows }],
+      };
+    },
+  },
+  {
+    id: 'friends', params: [{ id: 'min', type: 'number', min: 2, max: 100, default: 3, label: 'minQsos' }, { id: 'months', type: 'number', min: 1, max: 120, default: 12, label: 'monthsAway' }, topParam],
+    render(ctx, p) {
+      const { t } = ctx, r = I.friends(ctx.qsos, { minQsos: Number(p.min), months: Number(p.months), now: ctx.now });
+      const head = [t('call'), t('qsos'), t('bands'), t('country'), t('firstQso'), t('lastQso')];
+      const row = f => [f.call, f.qsos, f.bands.join(' '), f.country, fmtDate(f.first), fmtDate(f.last)];
+      return {
+        html: bars(r.frequent.slice(0, p.top).map(f => [f.call, f.qsos]), { title: t('frequentTitle', { n: p.top }), drill: 'call', width: 1240 })
+          + `<h3>${esc(t('frequentList'))}</h3>` + table(head, r.frequent.map(row), { numeric: [1], links: { 0: 'call', 3: 'country' }, max: ctx.report ? 100 : 2000 })
+          + `<h3>${esc(t('missingFriends', { m: p.months }))}</h3>` + (r.missing.length ? table(head, r.missing.map(row), { numeric: [1], links: { 0: 'call', 3: 'country' } }) : `<p class="help">${esc(t('noneFound'))}</p>`),
+        tables: [{ title: t('frequentList'), head, rows: r.frequent.map(row) }, { title: t('missingFriends', { m: p.months }), head, rows: r.missing.map(row) }],
+      };
+    },
+  },
+  {
+    id: 'newcalls', params: [{ id: 'unit', type: 'select', options: ['month', 'year'], default: 'month', label: 'timeUnit' }],
+    render(ctx, p) {
+      const { t } = ctx, r = I.newCallsPerPeriod(ctx.qsos, p.unit);
+      const head = [t('period'), t('qsos'), t('newCalls'), t('newDxcc'), t('cumulative')], rows = r.map(x => [x.period, x.qsos, x.newCalls, x.newDxcc, x.cumulative]);
+      return {
+        html: bars(r.map(x => [x.period, x.newCalls, x.period]), { title: t('newCallsTitle'), horizontal: false, drill: p.unit, width: 1240 })
+          + lines(r.map(x => Date.parse((p.unit === 'year' ? x.period + '-01' : x.period) + '-01T00:00:00Z')), [{ name: t('cumulative'), values: r.map(x => x.cumulative) }], { title: t('newCallsCumulative'), xFormat: v => new Date(v).toISOString().slice(0, p.unit === 'year' ? 4 : 7), area: true, width: 1240 })
+          + table(head, rows, { numeric: [1, 2, 3, 4] }),
+        tables: [{ title: t('page_newcalls'), head, rows }],
+      };
+    },
+  },
+  {
+    id: 'contest', params: [{ id: 'key', type: 'select', optionsFn: qsos => I.contests(qsos).map(c => c.key), default: '', label: 'contestLabel' }],
+    render(ctx, p) {
+      const { t } = ctx, list = I.contests(ctx.qsos);
+      if (!list.length) return { html: `<p class="notice">${esc(t('noContests'))}</p>`, tables: [] };
+      const key = p.key && list.some(c => c.key === p.key) ? p.key : list[0].key;
+      const r = I.contestAnalysis(ctx.qsos, key, ctx.points), c = r.current, prev = r.previous;
+      const metric = (label, f) => [label, c ? f(c) : '—', prev ? f(prev) : '—'];
+      const rows = [metric(t('period'), x => `${fmtDateTime(x.start)} → ${fmtDateTime(x.end)}`), metric(t('qsos'), x => x.qsos), metric(t('dupes'), x => x.dupes), metric(t('points'), x => x.points),
+        metric(t('multDxcc'), x => x.mults.dxcc), metric(t('multCq'), x => x.mults.cqz), metric(t('prefixes'), x => x.mults.pfx), metric(t('operatingTime'), x => fmtDur(x.operatingMs)), metric(t('maxRateN', { n: 60 }), x => x.max60),
+        metric(t('scoreDxcc'), x => x.scoreDxcc.toLocaleString()), metric(t('scoreCq'), x => x.scoreCq.toLocaleString())];
+      const head = [t('metric'), String(r.year), String(r.year - 1)];
+      return {
+        html: `<p class="help">${esc(t('contestNote', { id: r.id }))}</p>` + table(head, rows, { numeric: [1, 2] })
+          + twoCol(bars(c.hours.map(([h, n]) => [fmtDateTime(Number(h)).slice(5, 13) + 'h', n, Number(h) + '~' + (Number(h) + 3600000)]), { title: t('qsosPerHourContest'), horizontal: false, drill: 'range' }), table([t('band'), t('qsos'), 'DXCC', 'CQ'], c.perBand.map(b => [b.band, b.qsos, b.dxcc, b.cqz]), { numeric: [1, 2, 3] })),
+        tables: [{ title: `${r.id} ${r.year}`, head, rows }],
+      };
+    },
+  },
 ];
 
 // Página de QSL (confirmações), também disponível como seção de relatório.
@@ -292,12 +378,61 @@ export const QSL_PAGE = {
     const htmlRows = list.map(e => [e.country, e.dxcc ?? '', e.cont, e.qsos, ...r.bands.map(b => ({ html: mark(e, b) === 'C' ? '<b class="qslC">C</b>' : mark(e, b) === 'W' ? '<span class="qslW">W</span>' : '' }))]);
     const sent = `<p class="help">${esc(t('qslSentSummary', { paper: r.paperSent, lotw: r.lotwSent, eqsl: r.eqslSent }))}</p>`;
     return {
-      html: tiles + sent + twoCol(chart, table([t('band'), t('worked'), t('confirmed')], perBand, { numeric: [1, 2] })) + `<p class="help">${esc(t('qslLegend'))}</p>` + table(head, htmlRows, { numeric: [1, 3], className: 'matrix' }),
+      html: tiles + sent + twoCol(chart, table([t('band'), t('worked'), t('confirmed')], perBand, { numeric: [1, 2] })) + `<p class="help">${esc(t('qslLegend'))}</p>` + table(head, htmlRows, { className: 'matrix', links: { 0: 'country', 2: 'cont' } }),
       tables: [{ title: t('dxccMatrix'), head, rows }, { title: t('dxccPerBandStatus'), head: [t('band'), t('worked'), t('confirmed')], rows: perBand }],
     };
   },
 };
 
-export const ALL_SECTIONS = [...STAT_PAGES, QSL_PAGE];
+
+const acceptParam = { id: 'accept', type: 'select', options: ['lotw-paper', 'any'], default: 'lotw-paper', label: 'acceptConfirmations' };
+const pct = (n, total) => (total ? Math.round((n / total) * 100) + '%' : '—');
+
+export const AWARDS_PAGE = {
+  id: 'awards', params: [acceptParam],
+  render(ctx, p) {
+    const { t } = ctx, d = A.dxccAward(ctx.qsos, ctx.cty, p.accept), was = A.wasAward(ctx.qsos, p.accept), waz = A.wazAward(ctx.qsos, p.accept), wpx = A.wpxAward(ctx.qsos, p.accept), vucc = A.vuccAward(ctx.qsos, p.accept), iota = A.iotaAward(ctx.qsos, p.accept);
+    const bar = (label, worked, confirmed, total) => `<div class="award"><div class="awardHead"><strong>${esc(label)}</strong><span>${confirmed} ${esc(t('confirmedShort'))} · ${worked} ${esc(t('workedShort'))}${total ? ' / ' + total : ''}</span></div><div class="awardBar"><i class="w" style="width:${total ? Math.min(100, (worked / total) * 100) : 0}%"></i><i class="c" style="width:${total ? Math.min(100, (confirmed / total) * 100) : 0}%"></i></div></div>`;
+    const dxccRows = d.categories.map(c => [t('dxcc_' + c.key), c.worked, c.confirmed, d.total - c.worked, pct(c.confirmed, d.total)]);
+    const missing = d.categories[0].missing;
+    const cells = (rows, type) => `<div class="awardGrid">${rows.map(r => `<span class="${r.confirmed ? 'c' : r.worked ? 'w' : ''}" title="${esc(r.qso ? r.qso.call + ' · ' + fmtDate(r.qso.ts) : '')}">${esc(r.key)}</span>`).join('')}</div>`;
+    return {
+      html: `<p class="help">${esc(t('awardsNote'))}</p>`
+        + d.categories.map(c => bar('DXCC ' + t('dxcc_' + c.key), c.worked, c.confirmed, d.total)).join('')
+        + table(['DXCC', t('worked'), t('confirmed'), t('missing'), '%'], dxccRows, { numeric: [1, 2, 3, 4] })
+        + `<h3>${esc(t('dxccPerBandAward'))}</h3>` + table([t('band'), t('worked'), t('confirmed')], d.perBand.map(b => [b.band, b.worked, b.confirmed]), { numeric: [1, 2] })
+        + `<h3>WAZ — ${esc(t('cqZones'))}</h3>` + bar('WAZ', waz.rows.filter(r => r.worked).length, waz.rows.filter(r => r.confirmed).length, 40) + cells(waz.rows)
+        + `<h3>WAS — ${esc(t('usStates'))}</h3>` + bar('WAS', was.rows.filter(r => r.worked).length, was.rows.filter(r => r.confirmed).length, 50) + cells(was.rows)
+        + `<h3>WPX</h3>` + bar('WPX', wpx.worked, wpx.confirmed, wpx.targets.find(x => x > wpx.confirmed) || wpx.confirmed)
+        + `<h3>VUCC</h3>` + (vucc.length ? vucc.map(v => bar('VUCC ' + v.band, v.worked, v.confirmed, v.target)).join('') : `<p class="help">${esc(t('noVhfGrids'))}</p>`)
+        + `<h3>IOTA</h3>` + bar('IOTA', iota.worked, iota.confirmed, 0)
+        + `<h3>${esc(t('dxccMissingList', { n: missing.length }))}</h3>` + `<p class="help">${missing.map(e => esc(e.name)).join(' · ')}</p>`,
+      tables: [{ title: 'DXCC', head: ['DXCC', t('worked'), t('confirmed'), t('missing'), '%'], rows: dxccRows }, { title: t('dxccMissingList', { n: missing.length }), head: [t('country'), t('cont')], rows: missing.map(e => [e.name, e.cont]) }],
+    };
+  },
+};
+
+export const UNCONFIRMED_PAGE = {
+  id: 'unconfirmed', params: [{ id: 'perBand', type: 'select', options: ['no', 'yes'], default: 'no', label: 'perBand' }, acceptParam],
+  render(ctx, p) {
+    const { t } = ctx, list = A.unconfirmed(ctx.qsos, { perBand: p.perBand === 'yes', accept: p.accept });
+    const head = [t('country'), t('band'), t('cont'), t('attempts'), t('bestQso'), t('date'), t('mode'), 'LoTW'];
+    const rows = list.map(x => [x.country, x.band || '—', x.cont, x.attempts, x.best.call, fmtDateTime(x.best.ts), x.best.mode, x.best.lotwSent === 'Y' ? t('sent') : '']);
+    return { html: `<p class="help">${esc(t('unconfirmedNote'))}</p><div class="tiles">${tile(t('toConfirm'), list.length)}</div>` + table(head, rows, { numeric: [3], links: { 0: 'country', 2: 'cont', 4: 'call' } }), tables: [{ title: t('page_unconfirmed'), head, rows }] };
+  },
+};
+
+export const RARE_PAGE = {
+  id: 'rare', params: [],
+  render(ctx) {
+    const { t } = ctx, list = A.rareWorked(ctx.qsos, ctx.cty), got = list.filter(x => x.qsos);
+    const head = ['#', t('country'), 'DXCC', t('qsos'), t('confirmed'), t('firstQso')];
+    const rows = list.map(x => [x.rank, x.name, x.dxcc, x.qsos || '', x.qsos ? (x.confirmed ? '✓' : '—') : '', x.first ? fmtDate(x.first) : '']);
+    return { html: `<p class="help">${esc(t('rareNote'))}</p><div class="tiles">${tile(t('rareWorked'), got.length + ' / ' + list.length)}</div>` + table(head, rows, { numeric: [0, 2, 3], links: { 1: 'country' } }), tables: [{ title: t('page_rare'), head, rows }] };
+  },
+};
+
+export const QSL_PAGES = [QSL_PAGE, AWARDS_PAGE, UNCONFIRMED_PAGE, RARE_PAGE];
+export const ALL_SECTIONS = [...STAT_PAGES, ...QSL_PAGES];
 export const sectionById = id => ALL_SECTIONS.find(s => s.id === id);
 export const defaultParams = page => Object.fromEntries(page.params.map(p => [p.id, p.default]));

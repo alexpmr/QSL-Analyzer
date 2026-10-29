@@ -1,5 +1,21 @@
 # Notas de versão
 
+## 0.2.0 - 2026-10-29
+
+- Ficha clicável de indicativos, países/DXCC, quadrículas, prefixos, zonas, continentes e estações: todos os QSOs, slots banda × modo, QSL por banda, estações, quadrículas e mapa.
+- Ficha do indicativo com dados do QRZ.com (API XML: foto, nome, QTH, quadrícula, LoTW/eQSL) e HamQTH como alternativa gratuita, com cache local.
+- Sem containers: tudo organizado por indicativo de estação; bancos antigos são unificados sem duplicar QSOs.
+- Importar logs em um passo, com popup de progresso (importados, ignorados por já existirem, QSL atualizadas); exportação e backup no menu Logs.
+- Aba QSL: Diplomas (DXCC Mixed/Phone/CW/Digital e por banda, WAZ, WAS, WPX, VUCC, IOTA), Faltam confirmar e Entidades raras.
+- Novas análises: Propagação (meses × países/continentes, horário, alcance e aberturas VHF/UHF), Comparar períodos, Estações frequentes e "sumidas", Novos indicativos e Concursos.
+- Dashboard com resumo da sua atividade em linguagem natural.
+- Saúde do log: banda × frequência, duplicados próximos, indicativos mal digitados e outros, com correção em lote.
+- Plataformas: conferência entre o app e QRZ/LoTW/eQSL/Club Log e sincronização automática ao abrir.
+- Filtros recolhidos com chips, painéis de filtros salvos e páginas longas divididas em sub-abas.
+- Relatório pronto "Meu ano no rádio".
+- Aviso do site oficial no mesmo modelo do Mesh Analyzer; matriz DXCC com colunas alinhadas.
+- Nesta versão o pacote publicado é só para Windows (Linux e macOS voltam nas próximas).
+
 ## 0.1.0 - 2026-10-29
 
 Primeira versão do PT2VHF QSL Analyzer.
