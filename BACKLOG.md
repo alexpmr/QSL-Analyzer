@@ -18,7 +18,11 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
-- **Backlog (29/10/2026): backup e restauração de tudo em Configurações → Banco de dados.** Um único arquivo de
+(nenhum)
+
+## Resolvidos na 0.4.0 (29/10/2026)
+
+- **[Resolvido] Backlog (29/10/2026): backup e restauração de tudo em Configurações → Banco de dados.** Um único arquivo de
   backup com **todo** o estado do app: contatos, preferências, painéis salvos, modelos de relatório, bloco de
   notas, registro de atividade, cache das fichas (dados e fotos do QRZ/HamQTH), CTY.DAT carregado e
   configurações das plataformas. Hoje existe só "Backup do banco" (JSON) no menu Logs; levar para
@@ -32,14 +36,14 @@ Itens solicitados e situação na versão 0.1.0.
   - **integridade:** arquivo com versão e soma de verificação; recusar arquivo corrompido sem mexer no banco;
   - **backup automático** opcional (ex.: diário ou a cada abertura), mantendo os N mais recentes na pasta de
     dados, com opção de escolher a pasta (ex.: nuvem).
-- **Backlog (29/10/2026): inserir, alterar e apagar um contato.** Formulário de QSO com os campos principais
+- **[Resolvido] Backlog (29/10/2026): inserir, alterar e apagar um contato.** Formulário de QSO com os campos principais
   (indicativo, data/hora UTC, banda/frequência, modo/submodo, RST enviado/recebido, estação, operador,
   quadrículas, nome, QTH, comentário, concurso/troca, status de QSL papel/LoTW/eQSL) e acesso aos demais campos
   ADIF. Ações: **novo contato** (menu Logs e atalho na ficha do indicativo), **editar** e **apagar** a partir da
   ficha, da busca e das tabelas de QSOs (com confirmação). Validar dados (data, banda × frequência, modo),
   completar país/DXCC/zonas pelo CTY.DAT, avisar se o contato já existe (mesma regra da importação) e
   registrar a alteração no registro de atividade.
-- **Backlog (29/10/2026): menu Logs com importar, exportar e sincronizar por fonte.** Para cada plataforma
+- **[Resolvido] Backlog (29/10/2026): menu Logs com importar, exportar e sincronizar por fonte.** Para cada plataforma
   (QRZ.com, LoTW, eQSL, Club Log), além de baixar/importar, permitir **enviar** os contatos do app e
   **sincronizar nos dois sentidos**:
   - QRZ.com: envio pela Logbook API (`ACTION=INSERT`, ADIF), com retorno de inseridos/duplicados/erros;
@@ -52,7 +56,7 @@ Itens solicitados e situação na versão 0.1.0.
     que já existe), marcando no app `*_QSL_SENT`/data de envio para não reenviar; escolher o que enviar
     (tudo, só os que faltam, filtro atual) e mostrar o progresso e o resultado por plataforma;
   - também exportar por fonte: ADIF já no formato esperado por cada plataforma.
-- **Backlog (29/10/2026): renomear o programa para "PT2VHF QSL Manager".** Trocar o nome em toda a interface
+- **[Resolvido] Backlog (29/10/2026): renomear o programa para "PT2VHF QSL Manager".** Trocar o nome em toda a interface
   (cabeçalho, título da janela, Sobre, ajuda, aviso do site, relatórios/PDF), nos atalhos e no instalador
   (`productName`), no README/CHANGELOG e na página do site (título, menu de projetos, catálogo, textos em
   7 idiomas, sitemap). Cuidados para não quebrar quem já usa:
@@ -65,7 +69,7 @@ Itens solicitados e situação na versão 0.1.0.
     (ou redirecionar a nova URL para ela), preservando o histórico dos contadores de download;
   - instalação nova substitui a antiga (sem dois atalhos/programas instalados lado a lado);
   - registrar a troca de nome no CHANGELOG da versão.
-- **Backlog (29/10/2026): LoTW falha com "INVALID_RESPONSE" também com "Desde" vazio.** Depois de algumas
+- **[Resolvido] Backlog (29/10/2026): LoTW falha com "INVALID_RESPONSE" também com "Desde" vazio.** Depois de algumas
   tentativas, a mesma conta (que antes trouxe 7 QSOs sem data) passou a falhar sempre, com ou sem data, com
   "Sincronizar ao abrir o app" ligado. Hipótese principal: limite de requisições do LoTW (página "Page Request
   Limit" / bloqueio temporário por consultas repetidas ao `lotwreport.adi`), agravado pela sincronização a
@@ -77,7 +81,7 @@ Itens solicitados e situação na versão 0.1.0.
     sincronização bem-sucedida (guardar a data/hora do último sucesso por plataforma);
   - botão "Conferir com o app" e "Baixar e importar" desabilitados durante a consulta (evitar cliques
     repetidos), com intervalo mínimo entre consultas manuais ao LoTW.
-- **Backlog (29/10/2026): LoTW com data em "Desde" falha com "INVALID_RESPONSE".** Com usuário/senha salvos e
+- **[Resolvido] Backlog (29/10/2026): LoTW com data em "Desde" falha com "INVALID_RESPONSE".** Com usuário/senha salvos e
   Desde = 01/01/2017, o download do LoTW termina em "Falha: INVALID_RESPONSE" (sem data, a mesma conta
   funciona, mas só traz o que chegou desde o último download). O app trata como inválida qualquer resposta sem
   `<eoh>`; o LoTW devolveu outra coisa (provável página de erro/ocupado, tempo de geração do relatório ou
@@ -89,18 +93,18 @@ Itens solicitados e situação na versão 0.1.0.
   - tratar LoTW ocupado/lento (respostas grandes): tempo limite maior e nova tentativa com espera;
   - se o relatório for grande demais, baixar em faixas de datas (por ano) e juntar;
   - testes com respostas simuladas de erro, ocupado e relatório grande.
-- **Backlog (29/10/2026): data inicial padrão 01/01/1980 nos downloads das plataformas.** Em LoTW, QRZ.com,
+- **[Resolvido] Backlog (29/10/2026): data inicial padrão 01/01/1980 nos downloads das plataformas.** Em LoTW, QRZ.com,
   eQSL e Club Log, o campo de data inicial ("Desde") vem preenchido com 01/01/1980 (editável), e é essa data
   que vai na consulta quando o usuário não mudar: LoTW `qso_qsorxsince=1980-01-01` (substitui o 1900-01-01
   da correção acima), eQSL `RcvdSince=19800101`, QRZ.com e Club Log com o parâmetro de data equivalente
   quando a API oferecer (senão, histórico completo e filtro local pela data). Mostrar o campo em todos os
   cartões de plataforma e explicar na ajuda.
-- **Correção (29/10/2026) — já no código, entra na próxima versão: LoTW importava só os QSOs recentes.**
+- **[Resolvido] Correção (29/10/2026) — já no código, entra na próxima versão: LoTW importava só os QSOs recentes.**
   Sem data, o LoTW devolve apenas o que chegou desde o último download (o mantenedor recebeu 7 de milhares).
   Agora o pedido sempre envia `qso_qsorxsince` (vazio = 1900-01-01, histórico completo). Além disso, um
   `lotwreport.adi` baixado do site e importado como arquivo é reconhecido (PROGRAMID LoTW): `QSL_RCVD`
   vira confirmação LoTW, e não QSL em papel; o Inbox do eQSL vira confirmação eQSL. Testes incluídos.
-- **Backlog (29/10/2026): todo download e toda atualização OTA contabilizados.** Garantir, de ponta a ponta,
+- **[Resolvido] Backlog (29/10/2026): todo download e toda atualização OTA contabilizados.** Garantir, de ponta a ponta,
   que cada download conte exatamente uma vez no contador do site (`download.php`, produto `qsl`):
   - download manual pela página `/qsl` (instalador e portátil, e futuras plataformas Linux/macOS);
   - link direto `https://www.pt2vhf.com/downloads/qsl-analyzer/<arquivo>` (rewrite do `.htaccess` para o

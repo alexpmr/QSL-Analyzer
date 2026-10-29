@@ -1,5 +1,14 @@
 # Notas de versão
 
+## 0.4.0 - 2026-10-29
+
+- Novo nome: **PT2VHF QSL Manager**, agora um gerenciador de contatos e confirmações QSL. Instalações anteriores são atualizadas e os dados são preservados.
+- Logs → Contatos: lista completa com inserir, editar e apagar contatos (com validação, aviso de duplicado e país/DXCC/zonas automáticos); edição também pela ficha do indicativo.
+- Plataformas: além de baixar, **enviar** e **sincronizar** com QRZ.com, eQSL, Club Log e LoTW (pelo TQSL instalado), marcando os contatos enviados para não reenviar; exportar ADIF por plataforma.
+- LoTW: histórico completo a partir de 01/01/1980 por padrão (data editável em todas as plataformas), mensagens claras quando o LoTW limita as consultas ou responde algo inesperado, sincronização automática incremental no máximo uma vez por dia e intervalo mínimo entre consultas manuais.
+- Arquivos lotwreport.adi e do Inbox do eQSL importados manualmente têm as confirmações marcadas como LoTW/eQSL.
+- Backup completo (.qslbackup) em Configurações → Banco de dados: contatos, preferências, painéis, modelos, notas, fichas e CTY.DAT, com senhas opcionais protegidas por senha do backup; restauração com prévia e cópia de segurança automática; backup automático diário ou a cada abertura.
+
 ## 0.3.0 - 2026-10-29
 
 - Atualização automática no Windows: o aviso de versão nova oferece "Atualizar agora", que baixa o pacote de www.pt2vhf.com com progresso (percentual, bytes e velocidade), confere tamanho e SHA-256, instala (instalador ou portátil) e reabre o app já atualizado, preservando banco, preferências e credenciais.

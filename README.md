@@ -1,6 +1,8 @@
-# PT2VHF QSL Analyzer
+# PT2VHF QSL Manager
 
-Aplicativo para **Windows, Linux e macOS** que **analisa os contatos de radioamador** a partir de logs ADIF e de outros formatos conhecidos, guarda tudo num **banco local** e gera estatísticas, mapas, status de QSL e relatórios em PDF. Tudo roda offline, no seu computador.
+> Antes chamado PT2VHF QSL Analyzer.
+
+Aplicativo para **Windows, Linux e macOS** que **gerencia e analisa os contatos de radioamador** a partir de logs ADIF e de outros formatos conhecidos, guarda tudo num **banco local** e gera estatísticas, mapas, status de QSL e relatórios em PDF. Tudo roda offline, no seu computador.
 
 [Notas da versão](CHANGELOG.md) · [Backlog](BACKLOG.md) · [Relatar problema ou sugestão](https://github.com/alexpmr/QSL-Analyzer/issues)
 
@@ -12,7 +14,7 @@ Aplicativo para **Windows, Linux e macOS** que **analisa os contatos de radioama
 - **Vários indicativos de estação.** Cada QSO guarda o seu `STATION_CALLSIGN`. Se você enviar dois ADIFs de duas estações diferentes, em **Configurações → Banco de dados** pode apagar só o indicativo que quiser, em todos os containers ou em um só.
 - **Formatos:** ADIF 2/3 (.adi), ADX (XML), Cabrillo 2/3, EDI REG1TEST (concursos VHF/UHF) e CSV com cabeçalho. Um ADIF também pode ser colado direto na tela.
 - **Plataformas online:** baixa e importa direto do **QRZ.com Logbook** (chave de API), do **ARRL LoTW** (confirmações), do **eQSL.cc** (Inbox) e do **Club Log**. As credenciais só ficam guardadas se você pedir, criptografadas pelo Windows.
-- **Menu Logs:** Importar logs (em um passo, com popup de progresso) · Importar de plataformas (com conferência e sincronização automática) · Modificar logs · Saúde do log · Busca no log (curingas `*` e `?`) · Exportar logs · Backup do banco.
+- **Menu Logs:** Contatos (inserir, editar e apagar) · Importar logs (em um passo, com popup de progresso) · Plataformas: baixar, enviar e sincronizar com QRZ.com, LoTW (via TQSL), eQSL e Club Log · Modificar logs · Saúde do log · Busca no log (curingas `*` e `?`) · Exportar logs · Backup e restauração.
 - **Fichas clicáveis:** indicativos, países/DXCC, quadrículas, prefixos, zonas, continentes e estações abrem uma ficha com todos os seus contatos; a do indicativo mostra também foto e dados do QRZ.com/HamQTH.
 - **Menu Estatísticas** com 20 análises: Estatísticas básicas, Estações trabalhadas, Mapas de atividade, Bandas/modos, Primeiro DXCC trabalhado, Trocas de banda, Pausas, Gráficos de QSOs, de duplicados, de pontos e de zonas, DXCC/locator, Arquivos KML (mapas), Azimutes/distâncias, Gráficos de tempo, Gráficos históricos, Tempo de operação, Taxa de QSOs, Taxas máximas e Taxas médias.
 - **Aba QSL:** confirmações por papel, LoTW e eQSL, matriz **DXCC × banda**, **Diplomas** (DXCC, WAZ, WAS, WPX, VUCC, IOTA), **Faltam confirmar** e **Entidades raras**.
@@ -41,7 +43,7 @@ Downloads, novas versões e atualizações são distribuídos **somente pelo sit
 
 As plataformas geradas a cada versão ficam em `.github/build-platforms.json`.
 
-No macOS o aplicativo ainda não é assinado pela Apple: na primeira abertura, clique com o botão direito no app e escolha **Abrir**. Se aparecer a mensagem "está danificado", rode `xattr -cr "/Applications/PT2VHF QSL Analyzer.app"` no Terminal.
+No macOS o aplicativo ainda não é assinado pela Apple: na primeira abertura, clique com o botão direito no app e escolha **Abrir**. Se aparecer a mensagem "está danificado", rode `xattr -cr "/Applications/PT2VHF QSL Manager.app"` no Terminal.
 
 A cada abertura, o aplicativo lembra que o site oficial é www.pt2vhf.com. Em seguida, consulta `www.pt2vhf.com/update.php` e avisa quando há uma versão nova.
 
@@ -52,7 +54,7 @@ A cada abertura, o aplicativo lembra que o site oficial é www.pt2vhf.com. Em se
 3. Em **Logs → Enviar logs**, arraste os arquivos. Depois, em **Logs → Importar logs**, escolha o container e importe. Outra opção é usar **Logs → Importar de plataformas**.
 4. Explore o **Dashboard**, as **Estatísticas** e a aba **QSL**, e monte o seu relatório em **Relatórios**.
 
-Na versão instalada, os dados ficam na pasta de dados do usuário (no Windows, `%APPDATA%\PT2VHF QSL Analyzer`; no Linux, `~/.config/PT2VHF QSL Analyzer`; no macOS, `~/Library/Application Support/PT2VHF QSL Analyzer`). Na portátil do Windows, ficam na pasta `data` ao lado do executável. O banco é um arquivo JSON gravado de forma atômica, e a versão anterior é mantida como `.bak`.
+Na versão instalada, os dados ficam na pasta de dados do usuário (no Windows, `%APPDATA%\PT2VHF QSL Manager`; no Linux, `~/.config/PT2VHF QSL Manager`; no macOS, `~/Library/Application Support/PT2VHF QSL Manager`). Na portátil do Windows, ficam na pasta `data` ao lado do executável. O banco é um arquivo JSON gravado de forma atômica, e a versão anterior é mantida como `.bak`.
 
 ## Desenvolvimento
 

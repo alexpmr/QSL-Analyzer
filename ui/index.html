@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'">
-  <title>PT2VHF QSL Analyzer</title><link rel="stylesheet" href="style.css">
+  <title>PT2VHF QSL Manager</title><link rel="stylesheet" href="style.css">
 </head>
 <body class="loading">
   <header>
-    <div class="topLine"><div class="brand"><span class="logo">◉</span><div><strong>PT2VHF <span>QSL ANALYZER</span> <span id="appVersion"></span></strong><small id="subtitle"></small></div></div>
+    <div class="topLine"><div class="brand"><span class="logo">◉</span><div><strong>PT2VHF <span>QSL MANAGER</span> <span id="appVersion"></span></strong><small id="subtitle"></small></div></div>
       <div class="headerActions"><span id="dbPill" class="pill"></span><details id="languageMenu"><summary><img id="languageFlag" src="flags/br.svg" alt=""><span id="currentLanguage"></span></summary><div id="languages"></div></details><button id="themeButton"></button></div>
     </div>
     <div class="navLine"><nav id="mainNav" aria-label="Menu"></nav><button id="updateButton" class="updateButton hidden"></button></div>
@@ -19,6 +19,7 @@
   <dialog id="siteNotice" class="noticeCard"><h2 id="siteNoticeTitle"></h2><p id="siteNoticeMessage"></p><p><a id="siteNoticeLink" href="#"></a></p><div class="dialogFoot"><button id="siteNoticeOk" class="okButton" autofocus></button></div></dialog>
   <dialog id="progressDialog" class="progressDialog"><h2 id="progressTitle"></h2><div class="progressRow"><progress id="progressBar" max="100" value="0"></progress><span id="progressPct"></span></div><p id="progressLabel" class="help"></p><div id="progressStats" class="progressStats"></div><div class="dialogFoot"><button id="progressGo" class="hidden"></button><button id="progressClose" class="primary hidden"></button></div></dialog>
   <dialog id="entityDialog" class="entityDialog"><div id="entityBody"></div></dialog>
+  <dialog id="qsoDialog" class="qsoDialog"><div id="qsoBody"></div></dialog>
   <dialog id="updateNotice"><div class="dialogHead"><h2 id="updateNoticeTitle"></h2></div><p id="updateNoticeMessage"></p><pre id="updateNoticeNotes"></pre><div id="updateProgressBox" class="hidden"><div class="progressRow"><progress id="updateProgress" max="100" value="0"></progress><span id="updatePct"></span></div><p id="updateStats" class="help"></p></div><div class="dialogFoot"><button id="updateNoticeLater"></button><button id="updateNoticeOpen" class="primary"></button></div></dialog>
   <dialog id="newsDialog"><h2 id="newsTitle"></h2><pre id="newsNotes"></pre><div class="dialogFoot"><button id="newsOk" class="primary"></button></div></dialog>
   <div id="toast" role="status"></div>

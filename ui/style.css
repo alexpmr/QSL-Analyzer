@@ -1,4 +1,4 @@
-/* PT2VHF QSL Analyzer — mesmo padrão visual dos aplicativos PT2VHF (Prop Tool, Mesh Analyzer). */
+/* PT2VHF QSL Manager — mesmo padrão visual dos aplicativos PT2VHF (Prop Tool, Mesh Analyzer). */
 :root{color-scheme:dark;font-family:Segoe UI,system-ui,sans-serif;font-size:14px;
   --bg:#09111d;--header:#101b2a;--panel:#0f1a29;--panel2:#0b1523;--text:#d6e1ef;--strong:#eef4fa;--muted:#8b9db4;--border:#253248;--accent:#69e1c2;
   --btn:#172537;--btnText:#d7e5f1;--btnBorder:#304159;--btnHover:#25374c;--input:#0b1523;--inputBorder:#34445b;
@@ -324,3 +324,17 @@ dialog.noticeCard .okButton{background:#1f2229;color:#fff;border:2px solid #e6b8
 .filterBox[open]>summary>span:first-child::before{transform:rotate(90deg)}
 #newsNotes{white-space:pre-wrap;max-height:300px;overflow:auto;font-family:inherit;font-size:12px;color:var(--muted)}
 #updateProgressBox{margin-top:10px}
+
+/* 0.4.0 — contatos (inserir/editar/apagar), envio às plataformas e backup. */
+.iconBtn{padding:3px 8px;font-size:12px;margin:0 2px}
+.iconBtn.danger{color:var(--danger)}
+.pager{display:flex;align-items:center;gap:10px;justify-content:center;margin:10px 0}
+.pager span{font-size:12px;color:var(--muted)}
+dialog.qsoDialog{width:860px;max-width:96vw;max-height:94vh;overflow:auto}
+dialog.qsoDialog .dialogHead h2{margin:0 0 6px}
+dialog.qsoDialog label>span{font-size:11px;color:var(--muted)}
+dialog.qsoDialog>div>form>label{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.qslFlags{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+.platformActions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.platformActions button{font-size:12px;padding:7px 10px}
+.platformStatus{margin:8px 0 0}

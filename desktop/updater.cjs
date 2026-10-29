@@ -3,14 +3,15 @@
 const fs=require('node:fs/promises'),path=require('node:path'),crypto=require('node:crypto');
 const {spawn}=require('node:child_process');
 
-const NAME=/^PT2VHF-QSL-Analyzer-\d+\.\d+\.\d+-win-x64-(?:setup|portable)\.exe$/;
+// Aceita o nome antigo (QSL Analyzer) e o novo (QSL Manager) dos pacotes.
+const NAME=/^PT2VHF-QSL-(?:Analyzer|Manager)-\d+\.\d+\.\d+-win-x64-(?:setup|portable)\.exe$/;
 const trustedURL=(url,name)=>{try{const u=new URL(url);return u.protocol==='https:'&&u.hostname==='www.pt2vhf.com'&&!u.search&&!u.hash&&u.pathname==='/downloads/qsl-analyzer/'+name;}catch{return false;}};
 
 function validAsset(asset){
   return Boolean(asset)&&NAME.test(asset.name||'')&&/^[a-f0-9]{64}$/.test(asset.sha256||'')&&Number.isInteger(asset.size)&&asset.size>1e6&&asset.size<700e6&&trustedURL(asset.url,asset.name);
 }
 
-async function downloadAsset(asset,folder,onProgress,{fetchImpl=fetch,userAgent='PT2VHF-QSL-Analyzer'}={}){
+async function downloadAsset(asset,folder,onProgress,{fetchImpl=fetch,userAgent='PT2VHF-QSL-Manager'}={}){
   if(!validAsset(asset))throw new Error('Pacote de atualização inválido');
   await fs.mkdir(folder,{recursive:true});
   const candidate=path.join(folder,asset.name),partial=candidate+'.partial';

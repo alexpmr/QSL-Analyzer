@@ -45,7 +45,7 @@ export function renderEntity({ t, qsos, type, value, home = null, lookup = null 
   const list = S.byTime(qsos.filter(entityMatcher(type, value)));
   const title = type === 'grid' ? value.toUpperCase().slice(0, 4) : value;
   const typeLabel = t('entity_' + type);
-  let html = `<div class="entityHead"><div><small>${esc(typeLabel)}</small><h2>${esc(title)}</h2></div><div class="entityActions">${ENTITY_FILTER[type] ? `<button data-entity-filter="${esc(type + ':' + value)}">${esc(t('filterByEntity'))}</button>` : ''}<button data-entity-close>${esc(t('close'))}</button></div></div>`;
+  let html = `<div class="entityHead"><div><small>${esc(typeLabel)}</small><h2>${esc(title)}</h2></div><div class="entityActions">${ENTITY_FILTER[type] ? `<button data-entity-filter="${esc(type + ':' + value)}">${esc(t('filterByEntity'))}</button>` : ''}${type === 'call' ? `<button data-qso-new-call="${esc(value)}">＋ ${esc(t('newContact'))}</button>` : ''}<button data-entity-close>${esc(t('close'))}</button></div></div>`;
   if (type === 'call') html += lookupCard(t, lookup?.data || null, { call: value, ...(lookup?.meta || {}) });
   if (!list.length) return html + `<p class="notice">${esc(t('entityNoQsos'))}</p>`;
   const bands = sortBands([...S.distinct(list, q => q.band)]), modes = [...S.distinct(list, q => q.mode)].sort();
@@ -78,8 +78,8 @@ export function renderEntity({ t, qsos, type, value, home = null, lookup = null 
     p.value++; p.label = `${q.call} · ${S.grid4(q) || q.country}: ${p.value}`; pts.set(k, p);
   }
   if (pts.size) html += worldMap([...pts.values()], { title: t('entityMap'), home, lines: type === 'call' });
-  const rows = [...list].reverse().map(q => [fmtDateTime(q.ts), q.call, q.band, q.mode, q.freq ? q.freq.toFixed(3) : '', q.rstS, q.rstR, q.station, q.operator, S.grid4(q), q.country, qslMarks(q)]);
-  html += `<h3>${esc(t('allQsos', { n: list.length }))}</h3>` + table([t('date'), t('call'), t('band'), t('mode'), 'MHz', 'S', 'R', t('station'), t('operator'), t('locator'), t('country'), 'QSL'], rows, { links: { 1: 'call', 7: 'station', 9: 'grid', 10: 'country' }, max: 3000 });
+  const rows = [...list].reverse().map(q => [fmtDateTime(q.ts), q.call, q.band, q.mode, q.freq ? q.freq.toFixed(3) : '', q.rstS, q.rstR, q.station, q.operator, S.grid4(q), q.country, qslMarks(q), { html: `<button class="iconBtn" data-qso-edit="${q.id}" title="${esc(t('edit'))}">✎</button><button class="iconBtn danger" data-qso-delete="${q.id}" title="${esc(t('delete'))}">✕</button>` }]);
+  html += `<h3>${esc(t('allQsos', { n: list.length }))}</h3>` + table([t('date'), t('call'), t('band'), t('mode'), 'MHz', 'S', 'R', t('station'), t('operator'), t('locator'), t('country'), 'QSL', ''], rows, { links: { 1: 'call', 7: 'station', 9: 'grid', 10: 'country' }, max: 3000 });
   html += `<p class="help">${esc(t('qslMarksLegend'))}</p>`;
   return html;
 }

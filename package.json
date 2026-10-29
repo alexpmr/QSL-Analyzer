@@ -1,8 +1,8 @@
 {
-  "name": "pt2vhf-qsl-analyzer",
-  "version": "0.3.0",
+  "name": "pt2vhf-qsl-manager",
+  "version": "0.4.0",
   "private": true,
-  "description": "Análise de logs de radioamador (ADIF, Cabrillo, EDI, CSV) com banco local, estatísticas e status de QSL",
+  "description": "Gerenciador de contatos e confirmações QSL para radioamadores: importação, edição, sincronização com plataformas, estatísticas e diplomas",
   "author": {
     "name": "Alex Rodrigues, PT2VHF",
     "email": "alexpmr@gmail.com"
@@ -25,7 +25,7 @@
   },
   "build": {
     "appId": "br.pt2vhf.qslanalyzer",
-    "productName": "PT2VHF QSL Analyzer",
+    "productName": "PT2VHF QSL Manager",
     "directories": {
       "output": "dist",
       "buildResources": "build"

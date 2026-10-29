@@ -19,11 +19,17 @@ async function kv(mode, fn) {
   });
 }
 
-function pickFiles(accept) {
+function pickFiles(accept, binary = false) {
   return new Promise(resolve => {
     const input = document.createElement('input');
-    input.type = 'file'; input.multiple = true; input.accept = accept;
-    input.onchange = async () => resolve(await Promise.all([...input.files].map(async f => ({ name: f.name, size: f.size, text: await f.text() }))));
+    input.type = 'file'; input.multiple = !binary; input.accept = accept;
+    input.onchange = async () => resolve(await Promise.all([...input.files].map(async f => {
+      if (!binary) return { name: f.name, size: f.size, text: await f.text() };
+      const buf = new Uint8Array(await f.arrayBuffer());
+      let bin = '';
+      for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      return { name: f.name, size: f.size, base64: btoa(bin) };
+    })));
     input.click();
   });
 }
@@ -41,7 +47,7 @@ export const backend = isDesktop ? {
   info: () => api.info(),
   loadDb: () => api.loadDb(),
   saveDb: json => api.saveDb(json),
-  openFiles: () => api.openFiles(),
+  openFiles: (options = {}) => api.openFiles(options),
   saveFile: (name, content, kind) => api.saveFile({ name, content, kind }),
   saveBinary: (name, base64, kind) => api.saveFile({ name, content: base64, kind, base64: true }),
   printPdf: opts => api.printPdf(opts),
@@ -58,11 +64,15 @@ export const backend = isDesktop ? {
   installUpdate: () => api.installUpdate(),
   takeNews: () => api.takeNews(),
   onUpdateProgress: cb => api.onUpdateProgress(cb),
+  tqslUpload: request => api.tqslUpload(request),
+  backupWrite: request => api.backupWrite(request),
+  backupDir: folder => api.backupDir(folder),
+  chooseFolder: () => api.chooseFolder(),
 } : {
   info: async () => ({ version: null, dataDir: 'IndexedDB (navegador)', portable: false, desktop: false }),
   loadDb: async () => { try { return (await kv('readonly', s => s.get('db'))) || null; } catch { return null; } },
   saveDb: async json => { await kv('readwrite', s => s.put(json, 'db')); return true; },
-  openFiles: () => pickFiles('.adi,.adif,.adx,.log,.cbr,.edi,.csv,.txt,.tsv'),
+  openFiles: (options = {}) => (options.backup ? pickFiles('.qslbackup,.json', true) : pickFiles('.adi,.adif,.adx,.log,.cbr,.edi,.csv,.txt,.tsv')),
   saveFile: async (name, content) => download(name, content),
   saveBinary: async (name, base64) => { const bin = Uint8Array.from(atob(base64), c => c.charCodeAt(0)); return download(name, new Blob([bin])); },
   printPdf: async () => { window.print(); return 'print'; },
@@ -81,6 +91,10 @@ export const backend = isDesktop ? {
   installUpdate: async () => false,
   takeNews: async () => null,
   onUpdateProgress: () => () => {},
+  tqslUpload: async () => ({ code: -1, error: 'TQSL_NOT_FOUND' }),
+  backupWrite: async ({ name, base64 }) => { const bin = Uint8Array.from(atob(base64), c => c.charCodeAt(0)); return download(name, new Blob([bin])); },
+  backupDir: async () => 'Downloads',
+  chooseFolder: async () => null,
   lookup: async (url, binary = false) => {
     const res = await fetch(url);
     if (!binary) return { status: res.status, text: await res.text() };

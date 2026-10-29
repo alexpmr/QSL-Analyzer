@@ -6,6 +6,7 @@ export const SCHEMA = 1;
 export const DEFAULT_PREFS = {
   myCall: '', myGrid: '', language: 'pt-BR', theme: 'dark', palette: 'default', pauseMinutes: 15, rateWindow: 60,
   pointsRule: 'adif', utcOffset: 0, dateFormat: 'iso', pageSize: 100, mergeQsl: true, recalcOnImport: true,
+  autoBackup: 'daily', backupKeep: 5, backupFolder: '',
 };
 
 export function emptyDb() {

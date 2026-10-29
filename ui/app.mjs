@@ -1,17 +1,18 @@
 import { parseCty, attachDxcc, lookup } from '../src/cty.mjs';
-import { parseLog, detectFormat } from '../src/parsers.mjs';
+import { parseLog, detectFormat, normalizeRecord } from '../src/parsers.mjs';
 import * as DB from '../src/db.mjs';
 import * as S from '../src/stats.mjs';
-import { sortBands } from '../src/bands.mjs';
+import { sortBands, bandFromFreq } from '../src/bands.mjs';
 import { gridToLatLon, gridValid } from '../src/geo.mjs';
-import { toAdif, toCsv, toCabrillo, toKml, toCsvRows } from '../src/export.mjs';
-import { PLATFORMS, buildRequest, parseResponse, validateCreds } from '../src/platforms.mjs';
+import { toAdif, toAdifRecord, toCsv, toCabrillo, toKml, toCsvRows } from '../src/export.mjs';
+import { PLATFORMS, buildRequest, parseResponse, validateCreds, DEFAULT_SINCE, OPTIONAL_FIELDS, validDate, SENT, markSent, buildQrzInsert, parseQrzInsert, buildEqslUpload, parseEqslUpload, buildClublogUpload, parseClublogUpload } from '../src/platforms.mjs';
 import { LANGUAGES, translate } from '../src/i18n.mjs';
 import { APP_VERSION } from '../src/version.mjs';
 import { backend, isDesktop } from './backend.mjs';
 import { setPalette, loadLand, bars, worldMap, stacked, table, tile, esc, entityLink } from './charts.mjs';
 import { STAT_PAGES, QSL_PAGES, ALL_SECTIONS, sectionById, defaultParams, fmtDate, fmtDateTime, fmtDur } from './pages.mjs';
 import { renderEntity, ENTITY_FILTER } from './entity.mjs';
+import { buildBackup, readBackup, sealSecrets, openSecrets, b64, unb64 } from './backup.mjs';
 import { summaryFacts, logHealth } from '../src/insights.mjs';
 import { currentEntities } from '../src/awards.mjs';
 import { qrzLoginUrl, qrzLookupUrl, parseQrz, hamqthLoginUrl, hamqthLookupUrl, parseHamqth } from '../src/lookup.mjs';
@@ -26,7 +27,7 @@ const t = (key, vars) => translate(db.prefs.language, key, vars);
 // ---------- Navegação ----------
 const NAV = [
   { id: 'dashboard', pages: ['dashboard'] },
-  { id: 'logs', pages: ['import', 'platforms', 'modify', 'health', 'search', 'exportlogs', 'backup'] },
+  { id: 'logs', pages: ['contacts', 'import', 'platforms', 'exportlogs', 'modify', 'health', 'search', 'backup'] },
   { id: 'stats', pages: STAT_PAGES.map(p => p.id) },
   { id: 'qsl', pages: QSL_PAGES.map(p => p.id) },
   { id: 'reports', pages: ['report', 'compare'] },
@@ -54,7 +55,7 @@ function renderHeader() {
   document.documentElement.dataset.theme = db.prefs.theme;
   document.documentElement.lang = db.prefs.language;
   setPalette(db.prefs.palette, db.prefs.theme);
-  document.title = 'PT2VHF QSL Analyzer v' + (info.version || APP_VERSION);
+  document.title = 'PT2VHF QSL Manager v' + (info.version || APP_VERSION);
 }
 
 function go(group, page) {
@@ -283,7 +284,7 @@ const progress = {
 };
 
 // Importa arquivos (ou texto colado) em lotes, atualizando o popup a cada lote.
-async function importFiles(files, opts = readImportForm(), { title = t('importingTitle'), source = null, adjust = null } = {}) {
+async function importFiles(files, opts = readImportForm(), { title = t('importingTitle'), source = null, adjust = null, keep = null } = {}) {
   if (!files.length) return null;
   progress.open(title);
   const parsed = [], errors = [];
@@ -293,7 +294,7 @@ async function importFiles(files, opts = readImportForm(), { title = t('importin
     try {
       const r = parseLog(f.text, f.name, { station: opts.forceStation ? '' : opts.station, operator: opts.operator, myGrid: opts.myGrid || db.prefs.myGrid }, opts.format);
       errors.push(...r.errors);
-      parsed.push({ name: f.name, qsos: r.qsos });
+      parsed.push({ name: f.name, qsos: keep ? r.qsos.filter(keep) : r.qsos });
     } catch { errors.push({ index: f.name, call: '', reason: 'format' }); }
   }
   const total = parsed.reduce((s, p) => s + p.qsos.length, 0);
@@ -326,20 +327,209 @@ async function importFiles(files, opts = readImportForm(), { title = t('importin
   return res;
 }
 
-// ---------- Plataformas online ----------
+// ---------- Contatos: lista, inserir, editar e apagar ----------
+const PAGE_SIZE = 200;
+const qslMarksOf = q => [q.qslRcvd === 'Y' ? 'P' : '', q.lotwRcvd === 'Y' ? 'L' : '', q.eqslRcvd === 'Y' ? 'E' : ''].join('');
+
+PAGES.contacts = () => {
+  const list = filteredQsos().reverse();
+  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE)), page = Math.min(ui.contactsPage || 0, pages - 1);
+  const rows = list.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map(q => [fmtDateTime(q.ts), q.call, q.band, q.mode, q.freq ? q.freq.toFixed(3) : '', q.rstS, q.rstR, q.station, S.grid4(q), q.country, qslMarksOf(q), { html: `<button class="iconBtn" data-qso-edit="${q.id}" title="${esc(t('edit'))}">✎</button><button class="iconBtn danger" data-qso-delete="${q.id}" title="${esc(t('delete'))}">✕</button>` }]);
+  const pager = pages > 1 ? `<div class="pager"><button data-contacts-page="${page - 1}"${page ? '' : ' disabled'}>‹</button><span>${esc(t('pageOf', { p: page + 1, n: pages }))}</span><button data-contacts-page="${page + 1}"${page < pages - 1 ? '' : ' disabled'}>›</button></div>` : '';
+  return `<section class="page wide">${head('logs', 'page_contacts', 'contactsHelp')}${filterBar()}
+    <div class="resultHead"><span class="pill">${esc(t('qsosInFilter', { n: list.length.toLocaleString() }))}</span><button class="primary" data-qso-new>＋ ${esc(t('newContact'))}</button></div>
+    ${list.length ? table([t('date'), t('call'), t('band'), t('mode'), 'MHz', 'S', 'R', t('station'), t('locator'), t('country'), 'QSL', ''], rows, { links: { 1: 'call', 7: 'station', 8: 'grid', 9: 'country' }, max: PAGE_SIZE }) + pager : `<p class="notice">${esc(t('noQsosFilter'))}</p>`}
+    <p class="help">${esc(t('qslMarksLegend'))}</p></section>`;
+};
+
+const QSO_FIELDS = [['call', 'CALL'], ['date', 'QSO_DATE'], ['time', 'TIME_ON'], ['band', 'BAND'], ['freq', 'FREQ'], ['mode', 'MODE'], ['submode', 'SUBMODE'], ['rstS', 'RST_SENT'], ['rstR', 'RST_RCVD'], ['station', 'STATION_CALLSIGN'], ['operator', 'OPERATOR'], ['myGrid', 'MY_GRIDSQUARE'], ['grid', 'GRIDSQUARE'], ['name', 'NAME'], ['qth', 'QTH'], ['comment', 'COMMENT'], ['contest', 'CONTEST_ID'], ['stx', 'STX_STRING'], ['srx', 'SRX_STRING']];
+const QSL_FLAGS = [['qslSent', 'QSL_SENT'], ['qslRcvd', 'QSL_RCVD'], ['lotwSent', 'LOTW_QSL_SENT'], ['lotwRcvd', 'LOTW_QSL_RCVD'], ['eqslSent', 'EQSL_QSL_SENT'], ['eqslRcvd', 'EQSL_QSL_RCVD']];
+
+function openQsoForm(id = null, presetCall = '') {
+  const q = id ? db.qsos.find(x => x.id === id) : null;
+  const now = new Date(), ts = q ? new Date(q.ts) : now;
+  const v = {
+    call: q?.call || presetCall, date: ts.toISOString().slice(0, 10), time: ts.toISOString().slice(11, 16), band: q?.band || '', freq: q?.freq ? String(q.freq) : '', mode: q?.mode || '', submode: q?.submode || '',
+    rstS: q?.rstS || '', rstR: q?.rstR || '', station: q?.station || (db.prefs.myCall || '').toUpperCase(), operator: q?.operator || '', myGrid: q?.myGrid || db.prefs.myGrid || '', grid: q?.grid || '',
+    name: q?.name || '', qth: q?.qth || '', comment: q?.comment || '', contest: q?.contest || '', stx: q?.stx || '', srx: q?.srx || '',
+  };
+  const input = (k, type = 'text', extra = '') => `<label><span>${esc(t('qf_' + k))}</span><input name="${k}" type="${type}" value="${esc(v[k])}" ${extra}></label>`;
+  const flag = ([k]) => `<label class="check"><input type="checkbox" name="${k}"${q?.[k] === 'Y' ? ' checked' : ''}> ${esc(t('qf_' + k))}</label>`;
+  const extra = Object.entries(q?.extra || {}).map(([k, val]) => `${k}=${val}`).join('\n');
+  $('#qsoBody').innerHTML = `<form id="qsoForm" data-id="${id || ''}"><div class="dialogHead"><h2>${esc(t(q ? 'editContact' : 'newContact'))}</h2></div>
+    <div class="fields">${input('call', 'text', 'required maxlength="20" autofocus')}${input('date', 'date', 'required')}${input('time', 'time', 'required')}${input('band', 'text', 'list="bandList" maxlength="8"')}${input('freq', 'text', 'inputmode="decimal" placeholder="14.074"')}${input('mode', 'text', 'required list="modeList" maxlength="12"')}${input('submode')}${input('rstS')}${input('rstR')}${input('station', 'text', 'required maxlength="20"')}${input('operator')}${input('myGrid')}${input('grid')}${input('name')}${input('qth')}${input('contest')}${input('stx')}${input('srx')}</div>
+    <label><span>${esc(t('qf_comment'))}</span><input name="comment" value="${esc(v.comment)}"></label>
+    <h3>QSL</h3><div class="qslFlags">${QSL_FLAGS.map(flag).join('')}</div>
+    <details><summary>${esc(t('otherAdifFields'))}</summary><textarea name="extra" rows="5" placeholder="IOTA=SA-001&#10;SOTA_REF=PY/SP-001">${esc(extra)}</textarea></details>
+    <datalist id="bandList">${['160m', '80m', '60m', '40m', '30m', '20m', '17m', '15m', '12m', '11m', '10m', '6m', '4m', '2m', '1.25m', '70cm', '23cm'].map(b => `<option value="${b}">`).join('')}</datalist>
+    <datalist id="modeList">${['SSB', 'CW', 'FM', 'AM', 'FT8', 'FT4', 'RTTY', 'PSK31', 'JT65', 'MSK144', 'Q65', 'JS8', 'SSTV', 'DSTAR', 'DMR', 'C4FM'].map(m => `<option value="${m}">`).join('')}</datalist>
+    <p id="qsoError" class="error"></p>
+    <div class="dialogFoot">${q ? `<button type="button" class="dangerButton" data-qso-delete="${q.id}">${esc(t('delete'))}</button>` : ''}<button type="button" data-qso-cancel>${esc(t('cancel'))}</button><button type="submit" class="primary">${esc(t('save'))}</button></div></form>`;
+  const dlg = $('#qsoDialog');
+  if (!dlg.open) dlg.showModal();
+}
+
+function saveQsoForm(form) {
+  const f = Object.fromEntries(new FormData(form).entries()), id = Number(form.dataset.id) || null, err = $('#qsoError');
+  const rec = {};
+  for (const [k, adif] of QSO_FIELDS) if (String(f[k] ?? '').trim()) rec[adif] = String(f[k]).trim();
+  rec.QSO_DATE = String(f.date || '').replace(/-/g, '');
+  rec.TIME_ON = String(f.time || '').replace(/:/g, '').padEnd(4, '0');
+  for (const [k, adif] of QSL_FLAGS) rec[adif] = f[k] === 'on' ? 'Y' : 'N';
+  for (const line of String(f.extra || '').split(/\r?\n/)) { const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*)$/); if (m) rec[m[1].toUpperCase()] = m[2].trim(); }
+  const q = normalizeRecord(rec, { station: (f.station || '').toUpperCase() });
+  if (!q) { err.textContent = t('qsoInvalid'); return; }
+  if (q.freq && !q.band) q.band = bandFromFreq(q.freq);
+  if (!q.band) { err.textContent = t('qsoNeedBand'); return; }
+  if (q.freq && bandFromFreq(q.freq) && bandFromFreq(q.freq) !== q.band && !confirm(t('qsoBandMismatch', { b: q.band, f: bandFromFreq(q.freq) }))) return;
+  for (const k of ['qslSent', 'qslRcvd', 'lotwSent', 'lotwRcvd', 'eqslSent', 'eqslRcvd']) if (q[k] === 'N') q[k] = '';
+  const old = id ? db.qsos.find(x => x.id === id) : null;
+  if (old && old.call === q.call) Object.assign(q, { country: old.country, dxcc: old.dxcc, cont: old.cont, cqz: old.cqz, ituz: old.ituz, pfx: old.pfx });
+  DB.enrich(q, cty, { myGrid: db.prefs.myGrid });
+  const dupe = db.qsos.find(x => x.id !== id && (DB.dedupeKey(x) === DB.dedupeKey(q) || DB.dedupeKey(x) === DB.dedupeKey(q, -1) || DB.dedupeKey(x) === DB.dedupeKey(q, 1)));
+  if (dupe && !confirm(t('qsoDuplicate', { c: dupe.call, d: fmtDateTime(dupe.ts) }))) return;
+  if (old) { Object.keys(old).forEach(k => { if (!['id', 'c', 'src', 'imported'].includes(k)) delete old[k]; }); Object.assign(old, q, { edited: Date.now() }); DB.logActivity(db, 'qso-edit', `${q.call} ${fmtDateTime(q.ts)}`); }
+  else { db.qsos.push({ ...q, id: db.nextId++, c: 'main', src: 'manual', imported: Date.now() }); DB.logActivity(db, 'qso-new', `${q.call} ${fmtDateTime(q.ts)}`); }
+  persist();
+  $('#qsoDialog').close();
+  toast(t('contactSaved', { c: q.call }));
+  render();
+  if ($('#entityDialog').open && ui.entityStack.length) { const top = ui.entityStack.pop(); openEntity(top.type, top.value, { keepHistory: true }); }
+}
+
+function deleteQso(id) {
+  const q = db.qsos.find(x => x.id === id);
+  if (!q || !confirm(t('confirmDeleteContact', { c: q.call, d: fmtDateTime(q.ts) }))) return;
+  DB.deleteQsos(db, [id]);
+  persist();
+  if ($('#qsoDialog').open) $('#qsoDialog').close();
+  toast(t('contactDeleted', { c: q.call }));
+  render();
+  if ($('#entityDialog').open && ui.entityStack.length) { const top = ui.entityStack.pop(); openEntity(top.type, top.value, { keepHistory: true }); }
+}
+
+// ---------- Backup e restauração completos ----------
+async function collectSecrets() {
+  const out = { platforms: {}, lookup: {} }, dec = async v => { try { return v ? await backend.decrypt(v) : ''; } catch { return ''; } };
+  for (const id of Object.keys(PLATFORMS)) if (db.platforms[id]?.secret) { try { out.platforms[id] = JSON.parse(await dec(db.platforms[id].secret)); } catch { /* sem credencial */ } }
+  const lk = db.platforms.lookup || {};
+  if (lk.qrzSecret) out.lookup.qrzPass = await dec(lk.qrzSecret);
+  if (lk.hamqthSecret) out.lookup.hamqthPass = await dec(lk.hamqthSecret);
+  return out;
+}
+
+function withoutSecrets(source) {
+  const copy = structuredClone(source);
+  for (const id of Object.keys(copy.platforms || {})) if (copy.platforms[id]) delete copy.platforms[id].secret;
+  if (copy.platforms?.lookup) { delete copy.platforms.lookup.qrzSecret; delete copy.platforms.lookup.hamqthSecret; }
+  return copy;
+}
+
+async function makeBackup({ includeCreds = false, password = '' } = {}) {
+  const payload = { db: withoutSecrets(db), cty: await backend.loadCty() };
+  const credentials = includeCreds && password ? await sealSecrets(await collectSecrets(), password) : null;
+  return buildBackup({ payload, credentials, app: { name: 'PT2VHF QSL Manager', version: info.version || APP_VERSION }, stats: { qsos: db.qsos.length, stations: DB.stations(db).length } });
+}
+
+const backupName = prefix => `${prefix}-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.qslbackup`;
+
+async function backupNow() {
+  let password = '';
+  if ($('#backupCreds')?.checked) {
+    password = prompt(t('backupPasswordPrompt')) || '';
+    if (!password) return toast(t('backupNoPassword'), true);
+    if (prompt(t('backupPasswordConfirm')) !== password) return toast(t('backupPasswordMismatch'), true);
+  }
+  const bytes = await makeBackup({ includeCreds: Boolean(password), password });
+  const path = await backend.saveBinary(backupName('PT2VHF-QSL-Manager-backup'), b64(bytes), 'qslbackup');
+  if (path) { DB.logActivity(db, 'backup', path); persist(); toast(t('savedTo', { p: path })); }
+}
+
+async function autoBackup(force = false) {
+  const p = db.prefs;
+  if (!isDesktop || info.smoke || p.autoBackup === 'off' || !db.qsos.length) return;
+  const due = force || p.autoBackup === 'open' || (p.autoBackup === 'daily' && Date.now() - (p.lastAutoBackup || 0) > 86400000);
+  if (!due) return;
+  try {
+    const bytes = await makeBackup();
+    await backend.backupWrite({ name: backupName('auto'), base64: b64(bytes), folder: p.backupFolder || '', keep: Number(p.backupKeep) || 5 });
+    p.lastAutoBackup = Date.now();
+    persist();
+  } catch (e) { toast(t('autoBackupFailed', { e: e.message }), true); }
+}
+
+async function restoreBackup() {
+  const files = await backend.openFiles({ binary: true, backup: true });
+  if (!files?.length) return;
+  let parsed;
+  try { parsed = await readBackup(unb64(files[0].base64)); } catch (e) { return toast(t(e.message === 'BACKUP_CORRUPT' ? 'backupCorrupt' : 'invalidBackup'), true); }
+  const data = parsed.payload.db, stations = new Set((data.qsos || []).map(q => q.station || '')).size;
+  const summary = t('restorePreview', { d: parsed.doc.created ? fmtDateTime(Date.parse(parsed.doc.created)) : '—', v: parsed.doc.app?.version || '—', n: (data.qsos || []).length.toLocaleString(), s: stations });
+  if (!confirm(summary)) return;
+  let secrets = null;
+  if (parsed.doc.credentials) {
+    const password = prompt(t('restorePasswordPrompt'));
+    if (password) { try { secrets = await openSecrets(parsed.doc.credentials, password); } catch { toast(t('restoreWrongPassword'), true); } }
+  }
+  // Antes de substituir, guarda o estado atual.
+  try { await backend.backupWrite({ name: backupName('antes-de-restaurar'), base64: b64(await makeBackup()), folder: db.prefs.backupFolder || '', keep: 0 }); } catch { /* segue mesmo sem a cópia */ }
+  db = DB.migrate(data);
+  if (parsed.payload.cty !== undefined) { await backend.saveCty(parsed.payload.cty || ''); await loadCountryFile(); }
+  if (secrets) {
+    for (const [id, creds] of Object.entries(secrets.platforms || {})) if (db.platforms[id]) db.platforms[id].secret = await backend.encrypt(JSON.stringify(creds));
+    const lk = db.platforms.lookup ||= {};
+    if (secrets.lookup?.qrzPass) lk.qrzSecret = await backend.encrypt(secrets.lookup.qrzPass);
+    if (secrets.lookup?.hamqthPass) lk.hamqthSecret = await backend.encrypt(secrets.lookup.hamqthPass);
+  }
+  DB.logActivity(db, 'restore', files[0].name);
+  await persist(true);
+  toast(t(secrets || !parsed.doc.credentials ? 'restored' : 'restoredNoCreds'));
+  render();
+}
+
+function backupSection() {
+  const p = db.prefs;
+  return `<h2>${esc(t('backupTitle'))}</h2><p class="help">${esc(t('backupFullHelp'))}</p>
+    <label class="check"><input type="checkbox" id="backupCreds"> ${esc(t('backupIncludeCreds'))}</label>
+    <div class="formActions left"><button id="backupNow" class="primary">${esc(t('backupNow'))}</button><button id="restoreNow">${esc(t('restoreNow'))}</button></div>
+    <form id="autoBackupForm" class="fields">
+      <label><span>${esc(t('autoBackup'))}</span><select name="autoBackup">${options(['off', 'daily', 'open'], p.autoBackup || 'off', o => t('autoBackup_' + o))}</select></label>
+      <label><span>${esc(t('backupKeep'))}</span><input name="backupKeep" type="number" min="1" max="100" value="${Number(p.backupKeep) || 5}"></label>
+      <label><span>${esc(t('backupFolder'))}</span><input name="backupFolder" value="${esc(p.backupFolder || '')}" placeholder="${esc(ui.backupDefaultDir || '')}" readonly></label>
+      <div class="formActions left"><button type="button" id="chooseBackupFolder">${esc(t('chooseFolder'))}</button><button type="button" id="defaultBackupFolder">${esc(t('defaultFolder'))}</button><button type="submit">${esc(t('save'))}</button></div>
+    </form><p class="help">${esc(t('autoBackupHelp', { last: p.lastAutoBackup ? fmtDateTime(p.lastAutoBackup) : '—' }))}</p>`;
+}
+
+// ---------- Plataformas online: baixar, enviar e sincronizar ----------
+const SECRET_FIELDS = f => !OPTIONAL_FIELDS.has(f);
+const DAY_MS = 86400000;
+
 PAGES.platforms = () => {
   const saved = db.platforms || {};
   const cards = Object.entries(PLATFORMS).map(([id, p]) => {
     const s = saved[id] || {}, cmp = ui.platformCompare?.[id];
+    const pendingSend = db.qsos.filter(q => !SENT[id](q)).length;
+    const input = f => {
+      if (f === 'since') return `<label><span>${esc(t('cred_since'))}</span><input name="since" type="date" value="${esc(s.since || DEFAULT_SINCE)}"></label>`;
+      if (f === 'qthNickname' || f === 'tqslLocation') return `<label><span>${esc(t('cred_' + f))}</span><input name="${f}" type="text" autocomplete="off" value="${esc(s[f] || '')}"></label>`;
+      return `<label><span>${esc(t('cred_' + f))}</span><input name="${f}" type="${/password|apiKey/.test(f) ? 'password' : 'text'}" autocomplete="off" placeholder="${s.secret ? '••••••• (' + esc(t('saved')) + ')' : ''}"></label>`;
+    };
     return `<form class="platformCard" data-platform="${id}"><div class="cardHead"><strong>${esc(p.name)}</strong><small>${esc(new URL(p.url).host)}</small></div><p class="help">${esc(t(p.help))}</p>
-      <div class="fields">${p.fields.map(f => `<label><span>${esc(t('cred_' + f))}</span><input name="${f}" type="${/password|apiKey/.test(f) ? 'password' : f === 'since' ? 'date' : 'text'}" autocomplete="off" placeholder="${s.secret ? '••••••• (' + esc(t('saved')) + ')' : ''}"></label>`).join('')}
+      <div class="fields">${p.fields.map(input).join('')}
       <label><span>${esc(t('defaultStation'))}</span><input name="station" maxlength="20" value="${esc(s.station || db.prefs.myCall || '')}"></label></div>
       <label class="check"><input type="checkbox" name="remember"${s.remember ? ' checked' : ''}> ${esc(t('rememberCreds'))}</label>
       <label class="check"><input type="checkbox" name="autoSync"${s.autoSync ? ' checked' : ''}> ${esc(t('autoSync'))}</label>
-      <div class="formActions"><span class="platformStatus" data-status="${id}">${esc(s.last ? t('lastSync', { d: fmtDateTime(s.last), n: s.lastAdded ?? 0 }) : '')}</span><button type="button" data-platform-compare="${id}">${esc(t('comparePlatform'))}</button><button type="submit" class="primary">${esc(t('downloadImport'))}</button></div>
+      <p class="platformStatus" data-status="${id}">${esc(s.lastError ? t('platformError', { e: s.lastError }) : s.last ? t('lastSync', { d: fmtDateTime(s.last), n: s.lastAdded ?? 0 }) : '')}</p>
+      <div class="platformActions">
+        <button type="submit" class="primary">⇩ ${esc(t('downloadImport'))}</button>
+        <button type="button" data-platform-upload="${id}">⇧ ${esc(t('uploadPlatform', { n: pendingSend.toLocaleString() }))}</button>
+        <button type="button" data-platform-sync="${id}">⇅ ${esc(t('syncPlatform'))}</button>
+        <button type="button" data-platform-compare="${id}">${esc(t('comparePlatform'))}</button>
+        <button type="button" data-platform-export="${id}">${esc(t('exportForPlatform'))}</button>
+      </div>
       ${cmp ? `<div class="compareResult"><div class="tiles">${tile(t('inBoth'), cmp.both)}${tile(t('onlyLocal'), cmp.onlyLocal.length)}${tile(t('onlyRemote'), cmp.onlyRemote.length)}</div>${cmp.onlyLocal.length ? `<button type="button" data-export-only-local="${id}">${esc(t('exportOnlyLocal'))}</button>` : ''}${cmp.onlyRemote.length ? `<button type="button" data-import-only-remote="${id}">${esc(t('importOnlyRemote'))}</button>` : ''}</div>` : ''}</form>`;
   }).join('');
-  return `<section class="page wide">${head('logs', 'page_platforms', 'platformsHelp')}${isDesktop ? '' : `<p class="notice">${esc(t('platformsDesktopOnly'))}</p>`}<div class="platformGrid">${cards}</div>
+  return `<section class="page wide">${head('logs', 'page_platforms', 'platformsHelp')}${isDesktop ? '' : `<p class="notice">${esc(t('platformsDesktopOnly'))}</p>`}<p class="help">${esc(t('uploadScopeHelp'))}</p><div class="platformGrid">${cards}</div>
     <p class="help">${esc(t('platformsOther'))}</p></section>`;
 };
 
@@ -349,17 +539,22 @@ async function platformCreds(id, form) {
   let stored = {};
   if (saved.secret) { try { stored = JSON.parse(await backend.decrypt(saved.secret)); } catch { stored = {}; } }
   const creds = {};
-  for (const f of PLATFORMS[id].fields) creds[f] = data[f] || stored[f] || '';
-  return { creds, data: { station: data.station ?? saved.station ?? db.prefs.myCall ?? '', remember: form ? data.remember === 'on' : saved.remember, autoSync: form ? data.autoSync === 'on' : saved.autoSync } };
+  for (const f of PLATFORMS[id].fields) creds[f] = (data[f] ?? '') || (OPTIONAL_FIELDS.has(f) ? saved[f] : stored[f]) || '';
+  if (!validDate(creds.since)) creds.since = DEFAULT_SINCE;
+  return { creds, data: { station: data.station ?? saved.station ?? db.prefs.myCall ?? '', remember: form ? data.remember === 'on' : saved.remember, autoSync: form ? data.autoSync === 'on' : saved.autoSync, since: creds.since, qthNickname: creds.qthNickname || '', tqslLocation: creds.tqslLocation || '' } };
 }
+
+const platformErrorText = (code, detail = '') => (code === 'AUTH' ? t('authFailed') : code === 'RATE_LIMIT' ? t('lotwRateLimit') : code === 'INVALID_RESPONSE' ? t('invalidResponse', { d: detail || '—' }) : code) + (detail && code !== 'INVALID_RESPONSE' && code !== 'RATE_LIMIT' ? ` (${detail})` : '');
 
 async function downloadPlatform(id, creds, onStatus = () => {}) {
   let state = {}, adif = '', guard = 0;
   while (guard++ < 200) {
-    const res = await backend.fetchPlatform(buildRequest(id, creds, state));
+    let res = await backend.fetchPlatform(buildRequest(id, creds, state));
+    // LoTW/Club Log lentos ou ocupados: uma nova tentativa após uma pausa.
+    if (res.error || res.status === 503 || res.status === 502) { onStatus(t('retrying')); await new Promise(r => setTimeout(r, 8000)); res = await backend.fetchPlatform(buildRequest(id, creds, state)); }
     if (res.error) throw new Error(res.error);
     const parsed = parseResponse(id, res.text, state);
-    if (parsed.error) throw new Error(parsed.error === 'AUTH' ? t('authFailed') : parsed.error);
+    if (parsed.error) { const e = new Error(platformErrorText(parsed.error, parsed.detail || (res.status !== 200 ? 'HTTP ' + res.status : ''))); e.code = parsed.error; throw e; }
     adif += parsed.adif + '\n';
     state = parsed.state;
     onStatus(t('downloadingN', { n: (adif.match(/<eor>/gi) || []).length }));
@@ -372,40 +567,121 @@ async function downloadPlatform(id, creds, onStatus = () => {}) {
 const platformAdjust = id => q => {
   if (id === 'lotw') { if (q.qslRcvd === 'Y') q.lotwRcvd = 'Y'; q.qslRcvd = ''; q.lotwSent = 'Y'; }
   if (id === 'eqsl') { q.eqslRcvd = 'Y'; q.qslRcvd = ''; }
+  if (id === 'qrz') { q.extra ||= {}; q.extra.QRZCOM_QSO_UPLOAD_STATUS = 'Y'; }
+  if (id === 'clublog') { q.extra ||= {}; q.extra.CLUBLOG_QSO_UPLOAD_STATUS = 'Y'; }
 };
 
-async function savePlatform(id, data, creds, added) {
-  const entry = { ...(db.platforms[id] || {}), station: data.station, remember: data.remember, autoSync: data.autoSync, last: Date.now(), lastAdded: added };
-  if (entry.remember) entry.secret = await backend.encrypt(JSON.stringify(creds)); else delete entry.secret;
-  if (!entry.remember) entry.autoSync = false;
+async function savePlatform(id, data, creds, patch = {}) {
+  const entry = { ...(db.platforms[id] || {}), station: data.station, remember: data.remember, autoSync: data.autoSync, since: data.since, qthNickname: data.qthNickname, tqslLocation: data.tqslLocation, ...patch };
+  if (entry.remember) entry.secret = await backend.encrypt(JSON.stringify(Object.fromEntries(Object.entries(creds).filter(([f]) => SECRET_FIELDS(f)))));
+  else { delete entry.secret; entry.autoSync = false; }
   db.platforms[id] = entry;
   await persist(true);
 }
 
-async function runPlatform(id, form = null, { silent = false } = {}) {
+function platformLocked(id) {
+  // O LoTW limita consultas repetidas: intervalo mínimo de 60 s entre consultas manuais.
+  const s = db.platforms[id] || {};
+  if (id === 'lotw' && s.lastAttempt && Date.now() - s.lastAttempt < 60000) return t('lotwWait', { s: Math.ceil((60000 - (Date.now() - s.lastAttempt)) / 1000) });
+  return '';
+}
+
+async function runPlatform(id, form = null, { silent = false, incremental = false } = {}) {
   const { creds, data } = await platformCreds(id, form);
   const status = form?.querySelector('[data-status]') || { set textContent(v) {} };
   const missing = validateCreds(id, creds);
-  if (missing.length) { status.textContent = t('missingFields', { f: missing.map(m => t('cred_' + m)).join(', ') }); return; }
+  if (missing.length) { status.textContent = t('missingFields', { f: missing.map(m => t('cred_' + m)).join(', ') }); return null; }
+  const locked = platformLocked(id);
+  if (locked) { status.textContent = locked; return null; }
+  if (incremental && db.platforms[id]?.lastSuccess) creds.since = new Date(db.platforms[id].lastSuccess - DAY_MS).toISOString().slice(0, 10);
+  (db.platforms[id] ||= {}).lastAttempt = Date.now();
+  form?.querySelectorAll('button').forEach(b => (b.disabled = true));
   try {
     if (!silent) { progress.open(t('platformImportTitle', { p: PLATFORMS[id].name })); progress.update({ done: 0, total: 0, added: 0, skipped: 0, merged: 0, errors: 0, label: t('downloading') }); }
     const adif = await downloadPlatform(id, creds, msg => { status.textContent = msg; if (!silent) $('#progressLabel').textContent = msg; });
     const opts = { ...readImportForm(), station: String(data.station || '').toUpperCase(), forceStation: false, mergeQsl: true, recalc: true, format: 'adif' };
+    const from = Date.parse(creds.since + 'T00:00:00Z');
+    const keep = q => !(id === 'qrz' || id === 'clublog') || q.ts >= from;
     let res;
     if (silent) {
       const r = parseLog(adif, id + '.adi', { station: opts.station, myGrid: db.prefs.myGrid }, 'adif');
-      for (const q of r.qsos) { if (!q.station) q.station = opts.station; if (!q.operator) q.operator = q.station; platformAdjust(id)(q); DB.enrich(q, cty, { myGrid: db.prefs.myGrid }); }
-      res = DB.importQsos(db, r.qsos, 'main', { mergeQsl: true, source: PLATFORMS[id].name });
-    } else res = await importFiles([{ name: id + '.adi', text: adif }], opts, { title: t('platformImportTitle', { p: PLATFORMS[id].name }), source: PLATFORMS[id].name, adjust: platformAdjust(id) });
-    await savePlatform(id, data, creds, res.added);
+      const list = r.qsos.filter(keep);
+      for (const q of list) { if (!q.station) q.station = opts.station; if (!q.operator) q.operator = q.station; platformAdjust(id)(q); DB.enrich(q, cty, { myGrid: db.prefs.myGrid }); }
+      res = DB.importQsos(db, list, 'main', { mergeQsl: true, source: PLATFORMS[id].name });
+    } else res = await importFiles([{ name: id + '.adi', text: adif }], opts, { title: t('platformImportTitle', { p: PLATFORMS[id].name }), source: PLATFORMS[id].name, adjust: platformAdjust(id), keep });
+    await savePlatform(id, data, creds, { last: Date.now(), lastSuccess: Date.now(), lastAdded: res.added, lastError: '' });
     status.textContent = t('platformResult', { added: res.added, skipped: res.skipped, merged: res.merged });
     if (silent && res.added + res.merged) toast(`${PLATFORMS[id].name}: ` + t('platformResult', { added: res.added, skipped: res.skipped, merged: res.merged }));
+    DB.logActivity(db, 'platform-download', `${PLATFORMS[id].name}: +${res.added}`);
     renderHeader();
+    return res;
   } catch (e) {
-    status.textContent = t('platformError', { e: e.message });
-    if (!silent) { progress.finish(t('platformError', { e: e.message })); }
-    else toast(`${PLATFORMS[id].name}: ` + t('platformError', { e: e.message }), true);
-  }
+    const msg = e.message;
+    await savePlatform(id, data, creds, { lastError: msg, lastErrorCode: e.code || '', lastErrorAt: Date.now() });
+    DB.logActivity(db, 'platform-error', `${PLATFORMS[id].name}: ${msg}`);
+    status.textContent = t('platformError', { e: msg });
+    if (!silent) progress.finish(t('platformError', { e: msg }));
+    else toast(`${PLATFORMS[id].name}: ` + t('platformError', { e: msg }), true);
+    return null;
+  } finally { form?.querySelectorAll('button').forEach(b => (b.disabled = false)); }
+}
+
+// Envio dos contatos que ainda não foram enviados à plataforma (respeitando o filtro atual).
+async function uploadPlatform(id, form) {
+  const { creds, data } = await platformCreds(id, form);
+  const status = form?.querySelector('[data-status]') || { set textContent(v) {} };
+  const required = id === 'lotw' ? [] : validateCreds(id, creds);
+  if (required.length) { status.textContent = t('missingFields', { f: required.map(m => t('cred_' + m)).join(', ') }); return; }
+  const list = filteredQsos().filter(q => !SENT[id](q));
+  if (!list.length) { status.textContent = t('nothingToUpload'); return; }
+  if (!confirm(t('confirmUpload', { n: list.length.toLocaleString(), p: PLATFORMS[id].name }))) return;
+  form?.querySelectorAll('button').forEach(b => (b.disabled = true));
+  progress.open(t('uploadTitle', { p: PLATFORMS[id].name }));
+  const st = { done: 0, total: list.length, added: 0, skipped: 0, merged: 0, errors: 0 };
+  const show = label => progress.update({ ...st, label });
+  const stamp = new Date();
+  try {
+    if (id === 'qrz') {
+      for (const q of list) {
+        const res = await backend.fetchPlatform(buildQrzInsert(creds, toAdifRecord(q)));
+        const r = res.error ? { ok: false, error: res.error } : parseQrzInsert(res.text);
+        if (r.ok) { markSent(id, q, stamp); r.duplicate ? st.skipped++ : st.added++; } else st.errors++;
+        st.done++; show(r.ok ? q.call : r.error);
+        if (r.fatal) throw new Error(r.error);
+        if (st.done % 20 === 0) { persist(); await tick(); }
+      }
+    } else if (id === 'eqsl') {
+      for (let i = 0; i < list.length; i += 25) {
+        const batch = list.slice(i, i + 25), res = await backend.fetchPlatform(buildEqslUpload(creds, batch.map(toAdifRecord)));
+        const r = res.error ? { ok: false, error: res.error } : parseEqslUpload(res.text, batch.length);
+        if (r.ok) { batch.forEach(q => markSent(id, q, stamp)); st.added += r.added ?? batch.length; st.skipped += r.duplicates || 0; } else st.errors += batch.length;
+        st.done += batch.length; show(r.ok ? '' : r.error);
+        if (r.fatal) throw new Error(r.error);
+        await tick();
+      }
+    } else if (id === 'clublog') {
+      show(t('uploading'));
+      const res = await backend.fetchPlatform(buildClublogUpload(creds, toAdif(list, info.version || APP_VERSION)));
+      const r = res.error ? { ok: false, error: res.error } : parseClublogUpload(res.status, res.text);
+      if (!r.ok) throw new Error(r.error);
+      list.forEach(q => markSent(id, q, stamp)); st.added = list.length; st.done = list.length;
+    } else if (id === 'lotw') {
+      if (!isDesktop) throw new Error(t('tqslDesktopOnly'));
+      show(t('tqslSigning'));
+      const r = await backend.tqslUpload({ adif: toAdif(list, info.version || APP_VERSION), location: data.tqslLocation });
+      const msg = { TQSL_NOT_FOUND: t('tqslNotFound'), TQSL_NO_LOCATION: t('tqslNoLocation'), TQSL_TIMEOUT: t('tqslTimeout') }[r.error] || r.error;
+      if (r.code === 0 || r.code === 8 || r.code === 9) { list.forEach(q => markSent(id, q, stamp)); st.added = r.code === 8 ? 0 : list.length; st.skipped = r.code === 8 ? list.length : 0; st.done = list.length; }
+      else throw new Error(msg || t('tqslExit', { c: r.code, o: (r.output || '').slice(-200) }));
+    }
+    await savePlatform(id, data, creds, { lastUpload: Date.now() });
+    DB.logActivity(db, 'platform-upload', `${PLATFORMS[id].name}: ${st.added} / ${st.skipped} / ${st.errors}`);
+    await persist(true);
+    progress.finish(t('uploadFinished', { a: st.added, d: st.skipped, e: st.errors }));
+    render();
+  } catch (e) {
+    await persist(true);
+    progress.finish(t('platformError', { e: e.message }));
+  } finally { form?.querySelectorAll('button').forEach(b => (b.disabled = false)); }
 }
 
 // Conferência: o que existe só no app e só na plataforma, sem importar nada.
@@ -414,6 +690,9 @@ async function comparePlatform(id, form) {
   const status = form.querySelector('[data-status]');
   const missing = validateCreds(id, creds);
   if (missing.length) { status.textContent = t('missingFields', { f: missing.map(m => t('cred_' + m)).join(', ') }); return; }
+  const locked = platformLocked(id);
+  if (locked) { status.textContent = locked; return; }
+  (db.platforms[id] ||= {}).lastAttempt = Date.now();
   try {
     status.textContent = t('downloading');
     const adif = await downloadPlatform(id, creds, msg => (status.textContent = msg));
@@ -422,14 +701,27 @@ async function comparePlatform(id, form) {
     const key = q => `${q.call}|${q.band}|${Math.round(q.ts / 120000)}`;
     const remoteKeys = new Set(remote.flatMap(q => [key(q), key({ ...q, ts: q.ts - 60000 }), key({ ...q, ts: q.ts + 60000 })]));
     const localKeys = new Set(db.qsos.flatMap(q => [key(q), key({ ...q, ts: q.ts - 60000 }), key({ ...q, ts: q.ts + 60000 })]));
-    const onlyLocal = db.qsos.filter(q => !remoteKeys.has(key(q))), onlyRemote = remote.filter(q => !localKeys.has(key(q)));
-    (ui.platformCompare ||= {})[id] = { both: db.qsos.length - onlyLocal.length, onlyLocal, onlyRemote, adif };
+    const from = Date.parse(creds.since + 'T00:00:00Z');
+    const onlyLocal = db.qsos.filter(q => q.ts >= from && !remoteKeys.has(key(q))), onlyRemote = remote.filter(q => !localKeys.has(key(q)));
+    (ui.platformCompare ||= {})[id] = { both: db.qsos.filter(q => q.ts >= from).length - onlyLocal.length, onlyLocal, onlyRemote, adif };
     render();
   } catch (e) { status.textContent = t('platformError', { e: e.message }); }
 }
 
+async function syncPlatform(id, form) {
+  const res = await runPlatform(id, form);
+  if (res) await uploadPlatform(id, document.querySelector(`form[data-platform="${id}"]`) || form);
+}
+
+// Sincronização ao abrir: incremental e no máximo uma vez a cada 24 h; nunca logo após um bloqueio do LoTW.
 async function autoSyncPlatforms() {
-  for (const id of Object.keys(PLATFORMS)) if (db.platforms[id]?.autoSync && db.platforms[id]?.secret) await runPlatform(id, null, { silent: true });
+  for (const id of Object.keys(PLATFORMS)) {
+    const s = db.platforms[id];
+    if (!s?.autoSync || !s.secret) continue;
+    if (s.lastAttempt && Date.now() - s.lastAttempt < DAY_MS) continue;
+    if (s.lastErrorCode === 'RATE_LIMIT' && Date.now() - (s.lastErrorAt || 0) < DAY_MS) continue;
+    await runPlatform(id, null, { silent: true, incremental: true });
+  }
 }
 
 PAGES.modify = () => {
@@ -583,7 +875,7 @@ function buildReport(cfg, filter = ui.filter) {
   const qsos = filteredQsos(filter), ctx = statContext(qsos, true);
   const b = S.basic(qsos, { pauseMin: db.prefs.pauseMinutes, points: ctx.points });
   const parts = [];
-  if (cfg.cover) parts.push(`<section class="rCover"><small>PT2VHF QSL ANALYZER</small><h1>${esc(cfg.title)}</h1>${cfg.subtitle ? `<h2>${esc(cfg.subtitle)}</h2>` : ''}<p>${esc(cfg.author)}</p><p>${esc(t('generatedAt', { d: fmtDateTime(Date.now()) + ' UTC' }))}</p><div class="tiles">${tile(t('qsos'), b.qsos.toLocaleString())}${tile(t('uniqueCalls'), b.uniqueCalls.toLocaleString())}${tile(t('dxccEntities'), b.dxcc)}${tile(t('period'), fmtDate(b.first) + ' → ' + fmtDate(b.last))}</div>${cfg.filters ? `<p class="rFilters">${esc(filterSummary(filter))}</p>` : ''}</section>`);
+  if (cfg.cover) parts.push(`<section class="rCover"><small>PT2VHF QSL MANAGER</small><h1>${esc(cfg.title)}</h1>${cfg.subtitle ? `<h2>${esc(cfg.subtitle)}</h2>` : ''}<p>${esc(cfg.author)}</p><p>${esc(t('generatedAt', { d: fmtDateTime(Date.now()) + ' UTC' }))}</p><div class="tiles">${tile(t('qsos'), b.qsos.toLocaleString())}${tile(t('uniqueCalls'), b.uniqueCalls.toLocaleString())}${tile(t('dxccEntities'), b.dxcc)}${tile(t('period'), fmtDate(b.first) + ' → ' + fmtDate(b.last))}</div>${cfg.filters ? `<p class="rFilters">${esc(filterSummary(filter))}</p>` : ''}</section>`);
   else parts.push(`<header class="rHead"><h1>${esc(cfg.title)}</h1>${cfg.subtitle ? `<h2>${esc(cfg.subtitle)}</h2>` : ''}${cfg.filters ? `<p class="rFilters">${esc(filterSummary(filter))}</p>` : ''}</header>`);
   for (const s of cfg.sections) {
     const page = sectionById(s.id);
@@ -616,7 +908,7 @@ async function exportReportPdf(cfg, html, name) {
   document.head.appendChild(style);
   try {
     await new Promise(r => setTimeout(r, 120));
-    const out = await backend.printPdf({ landscape: cfg.orientation === 'landscape', pageSize: cfg.paper, name, footer: cfg.footer || 'PT2VHF QSL Analyzer' });
+    const out = await backend.printPdf({ landscape: cfg.orientation === 'landscape', pageSize: cfg.paper, name, footer: cfg.footer || 'PT2VHF QSL Manager' });
     if (out && out !== 'print') toast(t('savedTo', { p: out }));
   } catch (e) { toast(e.message, true); }
   finally { document.body.classList.remove('printing', 'printLight'); document.documentElement.style.background = ''; document.documentElement.style.colorScheme = ''; document.body.style.background = ''; style.remove(); root.innerHTML = ''; }
@@ -653,8 +945,7 @@ PAGES.exportlogs = () => {
       <div class="formActions"><button type="submit" class="primary">${esc(t('export'))}</button></div></form></section>`;
 };
 
-PAGES.backup = () => `<section class="page wide">${head('logs', 'page_backup', 'backupHelp')}
-  <div class="formActions left"><button id="backupDb" class="primary">${esc(t('backupDb'))}</button><button id="restoreDb">${esc(t('restoreDb'))}</button></div></section>`;
+PAGES.backup = () => `<section class="page">${head('logs', 'page_backup')}${backupSection()}</section>`;
 
 // ---------- Configurações ----------
 PAGES.preferences = () => {
@@ -686,6 +977,7 @@ PAGES.database = () => {
     <h2>${esc(t('clearByCall'))}</h2><p class="help">${esc(t('clearByCallHelp'))}</p>
     ${list.length ? `<div class="tableWrap"><table><thead><tr><th><label class="check"><input type="checkbox" id="checkAllStations"> ${esc(t('station'))}</label></th><th class="num">${esc(t('qsos'))}</th><th>${esc(t('period'))}</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="formActions"><button class="dangerButton" id="deleteStations">${esc(t('deleteSelectedCalls'))}</button></div>` : `<p class="help">${esc(t('emptyDbTitle'))}</p>`}
+    ${backupSection()}
     <h2>${esc(t('countryFile'))}</h2><p class="help">${esc(t('countryFileHelp', { v: cty?.version || '—' }))}</p><div class="formActions left"><button id="loadCty">${esc(t('loadCty'))}</button><button id="resetCty">${esc(t('resetCty'))}</button></div>
     <section class="factoryResetZone"><div><strong>${esc(t('clearAll'))}</strong><p class="help">${esc(t('clearAllHelp'))}</p></div><button class="dangerButton" id="clearAll">${esc(t('clearAll'))}</button></section>
     <section class="factoryResetZone"><div><strong>${esc(t('factoryReset'))}</strong><p class="help">${esc(t('factoryResetHelp'))}</p></div><button class="dangerButton" id="factoryReset">${esc(t('factoryReset'))}</button></section></section>`;
@@ -701,11 +993,11 @@ PAGES.activitylog = () => {
 
 PAGES.bug = () => `<section class="page">${head('settings', 'page_bug', 'bugHelp')}<pre class="diag">${esc(diagnostics())}</pre><div class="formActions left"><button id="copyDiag">${esc(t('copyDiag'))}</button><button id="openIssues" class="primary">${esc(t('openIssues'))}</button></div></section>`;
 
-const diagnostics = () => `PT2VHF QSL Analyzer ${info.version || APP_VERSION}\n${isDesktop ? 'Desktop' : 'Browser'} · ${navigator.userAgent}\nQSOs: ${db.qsos.length} · containers: ${db.containers.length} · CTY: ${cty?.version || '—'}\nLanguage: ${db.prefs.language}`;
+const diagnostics = () => `PT2VHF QSL Manager ${info.version || APP_VERSION}\n${isDesktop ? 'Desktop' : 'Browser'} · ${navigator.userAgent}\nQSOs: ${db.qsos.length} · containers: ${db.containers.length} · CTY: ${cty?.version || '—'}\nLanguage: ${db.prefs.language}`;
 
 PAGES.help = () => `<section class="page">${head('help', 'page_help')}${['Start', 'Logs', 'Platforms', 'Stats', 'Qsl', 'Reports', 'Database', 'Formats'].map(k => `<article><h2>${esc(t('helpT' + k))}</h2><p>${esc(t('helpB' + k))}</p></article>`).join('')}</section>`;
 
-PAGES.about = () => `<section class="page">${head('about', 'page_about')}<h2>PT2VHF QSL Analyzer v${esc(info.version || APP_VERSION)}</h2><p>${esc(t('aboutText'))}</p><p>${esc(t('author'))}</p>
+PAGES.about = () => `<section class="page">${head('about', 'page_about')}<h2>PT2VHF QSL Manager v${esc(info.version || APP_VERSION)}</h2><p>${esc(t('aboutText'))}</p><p>${esc(t('author'))}</p>
   <div class="contactLinks"><button data-link="https://www.pt2vhf.com/qsl">${esc(t('project'))}</button><button data-link="https://github.com/alexpmr/QSL-Analyzer/issues">${esc(t('openIssues'))}</button><button data-link="https://www.pt2vhf.com">www.pt2vhf.com</button></div>
   <p class="help">${esc(t('credits'))}</p><p class="help">${esc(t('ctyVersion', { v: cty?.version || '—' }))}</p></section>`;
 
@@ -759,13 +1051,13 @@ const stamp = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
 
 async function exportResult(kind) {
   if (!lastResult) return;
-  const base = `QSL-Analyzer-${lastResult.page}-${stamp()}`;
+  const base = `QSL-Manager-${lastResult.page}-${stamp()}`;
   if (kind === 'csv') {
     const rows = [];
     for (const tb of lastResult.tables) { if (lastResult.tables.length > 1) rows.push([tb.title]); rows.push(tb.head, ...tb.rows, []); }
     return saved(await backend.saveFile(base + '.csv', toCsvRows(rows), 'csv'));
   }
-  if (kind === 'txt') return saved(await backend.saveFile(base + '.txt', `PT2VHF QSL Analyzer — ${t('page_' + lastResult.page)}\n${filterSummary()}\n\n` + lastResult.tables.map(tableToText).join('\n'), 'txt'));
+  if (kind === 'txt') return saved(await backend.saveFile(base + '.txt', `PT2VHF QSL Manager — ${t('page_' + lastResult.page)}\n${filterSummary()}\n\n` + lastResult.tables.map(tableToText).join('\n'), 'txt'));
   if (kind === 'png') {
     const svg = [...document.querySelectorAll('#result svg.chart')].find(x => x.getClientRects().length);
     if (!svg) return toast(t('noChart'), true);
@@ -773,7 +1065,7 @@ async function exportResult(kind) {
   }
   if (kind === 'pdf') {
     const cfg = { ...reportCfg(), cover: false, sections: [], breakEach: false };
-    const html = `<header class="rHead"><small>PT2VHF QSL ANALYZER</small><h1>${esc(t('page_' + lastResult.page))}</h1><p class="rFilters">${esc(filterSummary())} · ${esc(fmtDateTime(Date.now()))} UTC</p></header>` + (lastResult.html || $('#result').innerHTML);
+    const html = `<header class="rHead"><small>PT2VHF QSL MANAGER</small><h1>${esc(t('page_' + lastResult.page))}</h1><p class="rFilters">${esc(filterSummary())} · ${esc(fmtDateTime(Date.now()))} UTC</p></header>` + (lastResult.html || $('#result').innerHTML);
     return exportReportPdf(cfg, html, base + '.pdf');
   }
   if (kind === 'addreport') {
@@ -844,8 +1136,17 @@ document.addEventListener('click', async e => {
     if (!name) return toast(t('chooseSavedFilter'), true);
     delete db.prefs.savedFilters[name]; persist(); return render();
   }
+  if (el.dataset.qsoNew !== undefined) return openQsoForm();
+  if (el.dataset.qsoNewCall) return openQsoForm(null, el.dataset.qsoNewCall);
+  if (el.dataset.qsoEdit) return openQsoForm(Number(el.dataset.qsoEdit));
+  if (el.dataset.qsoDelete) return deleteQso(Number(el.dataset.qsoDelete));
+  if (el.dataset.qsoCancel !== undefined) return $('#qsoDialog').close();
+  if (el.dataset.contactsPage) { ui.contactsPage = Number(el.dataset.contactsPage); return render(); }
   if (el.dataset.platformCompare) return comparePlatform(el.dataset.platformCompare, el.closest('form'));
-  if (el.dataset.exportOnlyLocal) { const c = ui.platformCompare[el.dataset.exportOnlyLocal]; return saved(await backend.saveFile(`QSL-Analyzer-somente-no-app-${el.dataset.exportOnlyLocal}-${stamp()}.adi`, toAdif(c.onlyLocal, info.version || APP_VERSION), 'adif')); }
+  if (el.dataset.platformUpload) return uploadPlatform(el.dataset.platformUpload, el.closest('form'));
+  if (el.dataset.platformSync) return syncPlatform(el.dataset.platformSync, el.closest('form'));
+  if (el.dataset.platformExport) { const id = el.dataset.platformExport, list = filteredQsos(); return saved(await backend.saveFile(`QSL-Manager-${id}-${stamp()}.adi`, toAdif(list, info.version || APP_VERSION), 'adif')); }
+  if (el.dataset.exportOnlyLocal) { const c = ui.platformCompare[el.dataset.exportOnlyLocal]; return saved(await backend.saveFile(`QSL-Manager-somente-no-app-${el.dataset.exportOnlyLocal}-${stamp()}.adi`, toAdif(c.onlyLocal, info.version || APP_VERSION), 'adif')); }
   if (el.dataset.importOnlyRemote) { const id = el.dataset.importOnlyRemote, c = ui.platformCompare[id]; delete ui.platformCompare[id]; return importFiles([{ name: id + '.adi', text: c.adif }], { ...readImportForm(), station: (db.platforms[id]?.station || db.prefs.myCall || '').toUpperCase(), format: 'adif', mergeQsl: true, recalc: true }, { title: t('platformImportTitle', { p: PLATFORMS[id].name }), source: PLATFORMS[id].name, adjust: platformAdjust(id) }); }
   if (el.dataset.healthShow) { ui.healthCheck = el.dataset.healthShow; return render(); }
   if (el.dataset.healthFix) { const kind = HEALTH_FIX[el.dataset.healthFix]; if (kind === 'deleteNearDupes' && !confirm(t('confirmDeleteQsos', { n: ui.health.nearDupes.length }))) return; return applyHealthFix(kind); }
@@ -878,13 +1179,10 @@ document.addEventListener('click', async e => {
     await backend.saveCty(files[0].text); await loadCountryFile(); toast(t('ctyLoaded', { v: cty.version || '—' })); return render();
   }
   if (el.id === 'resetCty') { await backend.saveCty(''); await loadCountryFile(); toast(t('ctyLoaded', { v: cty.version || '—' })); return render(); }
-  if (el.id === 'backupDb') return saved(await backend.saveFile(`QSL-Analyzer-backup-${stamp()}.json`, JSON.stringify(db), 'json'));
-  if (el.id === 'restoreDb') {
-    const files = await backend.openFiles();
-    if (!files?.length) return;
-    try { const data = JSON.parse(files[0].text); if (!Array.isArray(data.qsos)) throw new Error('format'); if (!confirm(t('confirmRestore', { n: data.qsos.length }))) return; db = DB.migrate(data); DB.logActivity(db, 'restore', files[0].name); await persist(true); toast(t('restored')); render(); } catch { toast(t('invalidBackup'), true); }
-    return;
-  }
+  if (el.id === 'backupNow') return backupNow();
+  if (el.id === 'restoreNow') return restoreBackup();
+  if (el.id === 'chooseBackupFolder') { const dir = await backend.chooseFolder(); if (dir) { db.prefs.backupFolder = dir; persist(); render(); } return; }
+  if (el.id === 'defaultBackupFolder') { db.prefs.backupFolder = ''; persist(); return render(); }
   if (el.id === 'copyDiag') { await navigator.clipboard?.writeText(diagnostics()); return toast(t('copied')); }
   if (el.id === 'openIssues') return backend.openExternal('https://github.com/alexpmr/QSL-Analyzer/issues/new?body=' + encodeURIComponent('\n\n---\n' + diagnostics()));
   // Relatório
@@ -902,8 +1200,8 @@ document.addEventListener('click', async e => {
     if (el.id === 'saveTemplate') { const name = $('#templateName').value.trim(); if (!name) return toast(t('templateName'), true); (db.prefs.reportTemplates ||= {})[name] = structuredClone(cfg); toast(t('templateSaved')); }
     if (el.id === 'loadTemplate') { const name = $('#templateSel').value; if (name && db.prefs.reportTemplates?.[name]) db.prefs.report = structuredClone(db.prefs.reportTemplates[name]); }
     if (el.id === 'deleteTemplate') { const name = $('#templateSel').value; if (name) delete db.prefs.reportTemplates[name]; }
-    if (el.id === 'reportPdf') return exportReportPdf(cfg, buildReport(cfg), `QSL-Analyzer-${(cfg.title || 'report').replace(/[^\p{L}\p{N}-]+/gu, '_')}-${stamp()}.pdf`);
-    if (el.id === 'reportHtml') return saved(await backend.saveFile(`QSL-Analyzer-${(cfg.title || 'report').replace(/[^\p{L}\p{N}-]+/gu, '_')}-${stamp()}.html`, reportHtmlDocument(cfg, buildReport(cfg)), 'html'));
+    if (el.id === 'reportPdf') return exportReportPdf(cfg, buildReport(cfg), `QSL-Manager-${(cfg.title || 'report').replace(/[^\p{L}\p{N}-]+/gu, '_')}-${stamp()}.pdf`);
+    if (el.id === 'reportHtml') return saved(await backend.saveFile(`QSL-Manager-${(cfg.title || 'report').replace(/[^\p{L}\p{N}-]+/gu, '_')}-${stamp()}.html`, reportHtmlDocument(cfg, buildReport(cfg)), 'html'));
     persist();
     return render();
   }
@@ -919,6 +1217,8 @@ document.addEventListener('submit', async e => {
     return render();
   }
   if (form.id === 'importForm') return;
+  if (form.id === 'qsoForm') return saveQsoForm(form);
+  if (form.id === 'autoBackupForm') { const f = new FormData(form); db.prefs.autoBackup = f.get('autoBackup'); db.prefs.backupKeep = Math.max(1, Math.min(100, Number(f.get('backupKeep')) || 5)); persist(); toast(t('saved')); if (db.prefs.autoBackup !== 'off' && !db.prefs.lastAutoBackup) autoBackup(true); return render(); }
   if (form.dataset.platform) return runPlatform(form.dataset.platform, form);
   if (form.id === 'modifyForm') {
     const f = new FormData(form), list = filteredQsos();
@@ -934,19 +1234,19 @@ document.addEventListener('submit', async e => {
   if (form.id === 'exportForm') {
     const f = new FormData(form), list = filteredQsos();
     if (!list.length) return toast(t('noQsosFilter'), true);
-    const fmt = f.get('format'), base = `QSL-Analyzer-${stamp()}`;
+    const fmt = f.get('format'), base = `QSL-Manager-${stamp()}`;
     let content, name;
     if (fmt === 'adif') { content = toAdif(list, info.version || APP_VERSION); name = base + '.adi'; }
     if (fmt === 'csv') { content = toCsv(list); name = base + '.csv'; }
     if (fmt === 'cabrillo') { content = toCabrillo(list, { call: String(f.get('call') || '').toUpperCase(), contest: f.get('contest'), operators: [...S.distinct(list, q => q.operator)].join(' '), grid: db.prefs.myGrid, version: info.version || APP_VERSION }); name = base + '.log'; }
-    if (fmt === 'kml') { content = toKml(list, { title: 'PT2VHF QSL Analyzer', home: homePosition(), layers: ['dxcc', 'grids'] }); name = base + '.kml'; }
+    if (fmt === 'kml') { content = toKml(list, { title: 'PT2VHF QSL Manager', home: homePosition(), layers: ['dxcc', 'grids'] }); name = base + '.kml'; }
     DB.logActivity(db, 'export', `${fmt}: ${list.length}`); persist();
     return saved(await backend.saveFile(name, content, fmt));
   }
   if (form.id === 'kmlForm') {
     const f = new FormData(form), layers = ['dxcc', 'grids', 'lines'].filter(k => f.get(k) === 'on');
-    const content = toKml(filteredQsos(), { title: 'PT2VHF QSL Analyzer · ' + filterSummary(), home: homePosition(), layers, timeline: f.get('timeline') === 'on' });
-    return saved(await backend.saveFile(`QSL-Analyzer-${stamp()}.kml`, content, 'kml'));
+    const content = toKml(filteredQsos(), { title: 'PT2VHF QSL Manager · ' + filterSummary(), home: homePosition(), layers, timeline: f.get('timeline') === 'on' });
+    return saved(await backend.saveFile(`QSL-Manager-${stamp()}.kml`, content, 'kml'));
   }
   if (form.id === 'prefsForm') {
     const f = new FormData(form), grid = String(f.get('myGrid') || '').trim();
@@ -1174,6 +1474,8 @@ async function start() {
   render();
   document.body.classList.remove('loading');
   if (isDesktop && !info.smoke) siteNotice();
+  backend.backupDir('').then(d => (ui.backupDefaultDir = d)).catch(() => {});
+  autoBackup();
   $('#entityDialog').addEventListener('close', () => (ui.entityStack = []));
   view.addEventListener('toggle', e => { if (e.target.matches?.('.filterBox')) ui.filtersOpen = e.target.open; }, true);
 }

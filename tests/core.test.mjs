@@ -115,10 +115,27 @@ test('platform responses',()=>{
 });
 
 test('LoTW: full history by default and lotwreport.adi recognized as LoTW confirmations',()=>{
-  assert.match(buildRequest('lotw',{username:'u',password:'p'}).url,/qso_qsorxsince=1900-01-01/);
+  assert.match(buildRequest('lotw',{username:'u',password:'p'}).url,/qso_qsorxsince=1980-01-01/);
   assert.match(buildRequest('lotw',{username:'u',password:'p',since:'2024-01-01'}).url,/qso_qsorxsince=2024-01-01/);
   const report='ARRL Logbook of the World Status Report\nGenerated at 2026-10-29 for pt2vhf\n<PROGRAMID:4>LoTW\n<APP_LoTW_NUMREC:1>1\n<eoh>\n<CALL:5>K1ABC <BAND:3>20M <MODE:3>FT8 <QSO_DATE:8>20240310 <TIME_ON:6>120000 <QSL_RCVD:1>Y <STATION_CALLSIGN:6>PT2VHF <eor>\n';
   const r=parseLog(report,'lotwreport.adi');
   assert.equal(r.origin,'lotw');assert.equal(r.qsos[0].lotwRcvd,'Y');assert.equal(r.qsos[0].qslRcvd,'');
   assert.equal(parseLog(adif,'a.adi').qsos[0].qslRcvd,'Y');
+});
+
+test('platform uploads: QRZ insert, eQSL batch, Club Log file and sent markers',async()=>{
+  const P=await import('../src/platforms.mjs');
+  assert.match(P.buildRequest('eqsl',{username:'u',password:'p'}).url,/RcvdSince=198001010000/);
+  const qrz=P.buildQrzInsert({apiKey:'K'},'<CALL:5>K1ABC <EOR>');assert.match(qrz.body,/ACTION=INSERT/);assert.match(qrz.body,/ADIF=%3CCALL%3A5%3EK1ABC/);
+  assert.deepEqual(P.parseQrzInsert('RESULT=OK&LOGID=1'),{ok:true});
+  assert.equal(P.parseQrzInsert('RESULT=FAIL&REASON=Unable+to+add+QSO+to+database%3A+duplicate').duplicate,true);
+  assert.equal(P.parseQrzInsert('RESULT=AUTH&REASON=invalid+api+key').fatal,true);
+  const e=P.buildEqslUpload({username:'U',password:'P'},['<CALL:5>K1ABC <EOR>']);assert.match(decodeURIComponent(e.body),/<EQSL_USER:1>U/);
+  assert.deepEqual(P.parseEqslUpload('<html>Result: 3 out of 5 records added</html>',5),{ok:true,added:3,total:5,duplicates:2});
+  assert.equal(P.parseEqslUpload('Error: No match on eQSL_User/eQSL_Pswd',1).fatal,true);
+  const c=P.buildClublogUpload({email:'a',password:'b',callsign:'C',apiKey:'k'},'adif');assert.equal(c.form.file.content,'adif');
+  assert.equal(P.parseClublogUpload(200,'OK').ok,true);assert.equal(P.parseClublogUpload(403,'Login rejected').fatal,true);
+  const q={call:'K1ABC',extra:{}};for(const k of ['qrz','lotw','eqsl','clublog']){assert.equal(P.SENT[k](q),false);P.markSent(k,q);assert.equal(P.SENT[k](q),true);}
+  assert.equal(P.parseResponse('lotw','<html><h1>Page Request Limit!</h1></html>').error,'RATE_LIMIT');
+  assert.match(P.parseResponse('lotw','<html><body>Server error 500</body></html>').detail,/Server error 500/);
 });

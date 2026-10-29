@@ -33,7 +33,7 @@ export function toAdifRecord(q) {
 
 export function toAdif(qsos, version) {
   const now = new Date();
-  const header = `Exportado por PT2VHF QSL Analyzer\n${field('ADIF_VER', '3.1.4')}${field('PROGRAMID', 'PT2VHF QSL Analyzer')}${field('PROGRAMVERSION', version || '')}${field('CREATED_TIMESTAMP', adifDate(+now) + ' ' + adifTime(+now))}<EOH>\n\n`;
+  const header = `Exportado por PT2VHF QSL Manager\n${field('ADIF_VER', '3.1.4')}${field('PROGRAMID', 'PT2VHF QSL Manager')}${field('PROGRAMVERSION', version || '')}${field('CREATED_TIMESTAMP', adifDate(+now) + ' ' + adifTime(+now))}<EOH>\n\n`;
   return header + qsos.map(toAdifRecord).join('');
 }
 
@@ -52,7 +52,7 @@ const CAB_BAND = { '160m': 1800, '80m': 3500, '40m': 7000, '20m': 14000, '15m': 
 const CAB_MODE = m => (m === 'CW' ? 'CW' : ['SSB', 'AM'].includes(m) ? 'PH' : m === 'FM' ? 'FM' : m === 'RTTY' ? 'RY' : 'DG');
 
 export function toCabrillo(qsos, { call = '', contest = '', operators = '', grid = '', version = '' } = {}) {
-  const lines = ['START-OF-LOG: 3.0', `CALLSIGN: ${call}`, `CONTEST: ${contest}`, `OPERATORS: ${operators}`, grid ? `GRID-LOCATOR: ${grid}` : null, `CREATED-BY: PT2VHF QSL Analyzer ${version}`].filter(Boolean);
+  const lines = ['START-OF-LOG: 3.0', `CALLSIGN: ${call}`, `CONTEST: ${contest}`, `OPERATORS: ${operators}`, grid ? `GRID-LOCATOR: ${grid}` : null, `CREATED-BY: PT2VHF QSL Manager ${version}`].filter(Boolean);
   for (const q of qsos) {
     const f = q.freq ? Math.round(q.freq * 1000) : CAB_BAND[q.band] || q.band;
     const d = new Date(q.ts), date = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`, time = pad(d.getUTCHours()) + pad(d.getUTCMinutes());
@@ -67,7 +67,7 @@ const xml = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').re
 const iso = ts => new Date(ts).toISOString().replace('.000', '');
 
 // KML com camadas: entidades DXCC, quadrículas, linhas de QSO e replay temporal.
-export function toKml(qsos, { title = 'QSL Analyzer', home = null, layers = ['dxcc', 'grids', 'lines'], timeline = false } = {}) {
+export function toKml(qsos, { title = 'QSL Manager', home = null, layers = ['dxcc', 'grids', 'lines'], timeline = false } = {}) {
   const out = [`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${xml(title)}</name>`,
     '<Style id="dx"><IconStyle><color>ffc2e169</color><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>',
     '<Style id="grid"><LineStyle><color>ff69e1c2</color><width>1</width></LineStyle><PolyStyle><color>5569e1c2</color></PolyStyle></Style>',

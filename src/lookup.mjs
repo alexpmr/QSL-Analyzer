@@ -1,6 +1,6 @@
 // Consulta de dados da estação no QRZ.com (API XML oficial) e no HamQTH.com.
 // Este módulo só monta URLs e interpreta respostas; o transporte é feito pelo processo principal.
-const AGENT = 'PT2VHF-QSL-Analyzer';
+const AGENT = 'PT2VHF-QSL-Manager';
 const enc = encodeURIComponent;
 
 export const QRZ_XML = 'https://xmldata.qrz.com/xml/current/';
