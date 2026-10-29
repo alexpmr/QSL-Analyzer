@@ -100,6 +100,19 @@ Itens solicitados e situação na versão 0.1.0.
     históricos (SFI/SSN, Kp) quando disponíveis;
   - tudo interativo (clique filtra, ficha da entidade) e exportável/relatório. Deixar claro que o resultado
     reflete a atividade do próprio operador (não mede propagação absoluta).
+- **Backlog (29/10/2026): ficha da estação com dados do QRZ.com (complementa o indicativo clicável).**
+  Ao clicar num indicativo, a ficha mostra em cima os dados da estação e embaixo tudo o que fiz de contato
+  com ela (QSOs, bandas, modos, primeiro/último contato, QSL por QSO, distância/azimute e mapa).
+  - Fonte principal: API XML do QRZ.com (XML Logbook Data, `xmldata.qrz.com`), nunca leitura da página
+    `qrz.com/db/<indicativo>` (proibida pelos termos do QRZ). Campos: foto, nome, QTH/endereço, país,
+    quadrícula, coordenadas, zonas CQ/ITU, IOTA, classe de licença, uso de LoTW/eQSL e link "Ver no QRZ.com".
+  - Assinatura XML Data do QRZ traz todos os campos (inclusive foto); conta gratuita traz só o básico (nome,
+    cidade, país). Indicar na ficha quando o dado é limitado pelo tipo de conta.
+  - Alternativa gratuita: HamQTH.com (API com cadastro): usar quando a conta QRZ não tiver assinatura ou a
+    estação não estiver no QRZ. O que nenhuma fonte devolver vira link para abrir a página no navegador.
+  - Credenciais do QRZ/HamQTH em Configurações, guardadas criptografadas (como as das plataformas).
+  - Cache local no banco (dados e foto), com data da consulta e botão "Atualizar dados do QRZ", para não
+    consultar a cada clique e funcionar offline.
 - **Ajuste de CI antes da próxima versão:** o job de release usa `gh release upload --clobber`; um push
   na `main` sem mudar a versão sobrescreveria os pacotes da release já publicada no site (SHA-256 diferente).
   Pular o upload quando a release da versão já existir.
