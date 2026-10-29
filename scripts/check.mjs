@@ -15,7 +15,7 @@ for(const m of source.matchAll(/label: '([A-Za-z]+)'/g))keys.add(m[1]);
 const pages=['dashboard','containers','upload','import','modify','copyfilter','search','platforms',...STAT_PAGES.map(p=>p.id),'qsl','report','compare','exportlogs','backup','preferences','database','scratchpad','activitylog','bug','help','about'];
 for(const p of pages)keys.add('page_'+p);
 for(const p of [...STAT_PAGES.map(p=>p.id),'qsl'])keys.add('help_'+p);
-for(const g of ['dashboard','logs','stats','qsl','reports','export','settings','help','about'])keys.add('nav_'+g);
+for(const g of ['dashboard','logs','stats','qsl','reports','settings','help','about'])keys.add('nav_'+g);
 for(const p of STAT_PAGES)for(const def of p.params)if(def.type==='select')for(const o of def.options)if(!/^\d+$/.test(o))keys.add('opt_'+o);
 for(const d of ['band','mode','operator','station','cont','radio'])keys.add('dim_'+d);
 for(const u of ['hour','day','month','year'])keys.add('unit_'+u);

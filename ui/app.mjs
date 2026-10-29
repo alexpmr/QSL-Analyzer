@@ -22,11 +22,10 @@ const t = (key, vars) => translate(db.prefs.language, key, vars);
 // ---------- Navegação ----------
 const NAV = [
   { id: 'dashboard', pages: ['dashboard'] },
-  { id: 'logs', pages: ['containers', 'upload', 'import', 'modify', 'copyfilter', 'search', 'platforms'], numbered: 5 },
+  { id: 'logs', pages: ['containers', 'upload', 'import', 'modify', 'copyfilter', 'search', 'platforms', 'exportlogs', 'backup'], numbered: 5 },
   { id: 'stats', pages: STAT_PAGES.map(p => p.id) },
   { id: 'qsl', pages: ['qsl'] },
   { id: 'reports', pages: ['report', 'compare'] },
-  { id: 'export', pages: ['exportlogs', 'backup'] },
   { id: 'settings', pages: ['preferences', 'database', 'scratchpad', 'activitylog', 'bug'] },
   { id: 'help', pages: ['help'] },
   { id: 'about', pages: ['about'] },
@@ -548,14 +547,14 @@ PAGES.compare = () => {
 // ---------- Exportação ----------
 PAGES.exportlogs = () => {
   const n = filteredQsos().length;
-  return `<section class="page wide">${head('export', 'page_exportlogs', 'exportHelp')}${filterBar()}<p class="pill">${esc(t('selectedQsos', { n }))} · ${esc(filterSummary())}</p>
+  return `<section class="page wide">${head('logs', 'page_exportlogs', 'exportHelp')}${filterBar()}<p class="pill">${esc(t('selectedQsos', { n }))} · ${esc(filterSummary())}</p>
     <form id="exportForm" class="fields"><label><span>${esc(t('format'))}</span><select name="format"><option value="adif">ADIF v3 (.adi)</option><option value="csv">CSV</option><option value="cabrillo">Cabrillo 3.0</option><option value="kml">KML (Google Earth)</option></select></label>
       <label><span>${esc(t('cabrilloContest'))}</span><input name="contest" maxlength="40" placeholder="CQ-WW-SSB"></label>
       <label><span>${esc(t('cabrilloCall'))}</span><input name="call" maxlength="20" value="${esc(db.prefs.myCall)}"></label>
       <div class="formActions"><button type="submit" class="primary">${esc(t('export'))}</button></div></form></section>`;
 };
 
-PAGES.backup = () => `<section class="page wide">${head('export', 'page_backup', 'backupHelp')}
+PAGES.backup = () => `<section class="page wide">${head('logs', 'page_backup', 'backupHelp')}
   <div class="formActions left"><button id="backupDb" class="primary">${esc(t('backupDb'))}</button><button id="restoreDb">${esc(t('restoreDb'))}</button></div></section>`;
 
 // ---------- Configurações ----------
