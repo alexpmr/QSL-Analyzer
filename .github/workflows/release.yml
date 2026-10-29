@@ -1,0 +1,116 @@
+name: Build and release (Windows, Linux, macOS)
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - name: Validate sources and engine
+        run: |
+          npm run check
+          npm test
+      - name: Read application version
+        id: version
+        run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: dist:win
+            name: windows
+          - os: ubuntu-latest
+            script: dist:linux
+            name: linux
+          - os: macos-latest
+            script: dist:mac
+            name: macos
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - name: Ensure Electron runtime is downloaded
+        run: node node_modules/electron/install.js
+      - name: Smoke-test Electron (Windows)
+        if: matrix.name == 'windows'
+        shell: pwsh
+        run: |
+          $process = Start-Process -FilePath '.\node_modules\electron\dist\electron.exe' -ArgumentList '. --smoke-test' -PassThru -Wait -NoNewWindow
+          if ($process.ExitCode -ne 0) { throw "Electron smoke test failed: $($process.ExitCode)" }
+      - name: Smoke-test Electron (Linux)
+        if: matrix.name == 'linux'
+        run: xvfb-run -a ./node_modules/electron/dist/electron . --smoke-test --no-sandbox
+      - name: Build packages
+        run: npm run ${{ matrix.script }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ matrix.name }}
+          path: |
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.tar.gz
+            dist/*.dmg
+          if-no-files-found: error
+  release:
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: packages-*
+          path: dist
+          merge-multiple: true
+      - name: Release notes and checksums
+        env:
+          VERSION: ${{ needs.test.outputs.version }}
+        run: |
+          awk -v v="$VERSION" '$0 ~ "^## "v" - " {p=1} p && /^## / && $0 !~ "^## "v" - " {exit} p' CHANGELOG.md > dist/release-notes.md
+          test -s dist/release-notes.md
+          cd dist && sha256sum *.exe *.AppImage *.deb *.tar.gz *.dmg > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Publish GitHub release (origin of the files served by www.pt2vhf.com)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: v${{ needs.test.outputs.version }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          cd dist
+          current_head=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq .object.sha)
+          if [ "$GITHUB_REF" = "refs/heads/main" ] && [ "$current_head" != "$RELEASE_COMMIT" ]; then
+            echo "A newer main commit exists; its build will publish."
+            exit 0
+          fi
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --target "$RELEASE_COMMIT" --title "PT2VHF QSL Analyzer $RELEASE_TAG" --notes-file release-notes.md
+          fi
+          gh release upload "$RELEASE_TAG" ./*.exe ./*.AppImage ./*.deb ./*.tar.gz ./*.dmg SHA256SUMS.txt --clobber

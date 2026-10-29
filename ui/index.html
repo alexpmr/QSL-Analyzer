@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'">
+  <title>PT2VHF QSL Analyzer</title><link rel="stylesheet" href="style.css">
+</head>
+<body class="loading">
+  <header>
+    <div class="topLine"><div class="brand"><span class="logo">◉</span><div><strong>PT2VHF <span>QSL ANALYZER</span> <span id="appVersion"></span></strong><small id="subtitle"></small></div></div>
+      <div class="headerActions"><span id="dbPill" class="pill"></span><details id="languageMenu"><summary><img id="languageFlag" src="flags/br.svg" alt=""><span id="currentLanguage"></span></summary><div id="languages"></div></details><button id="themeButton"></button></div>
+    </div>
+    <div class="navLine"><nav id="mainNav" aria-label="Menu"></nav><button id="updateButton" class="updateButton hidden"></button></div>
+  </header>
+  <nav id="subNav" class="subNav hidden" aria-label="Submenu"></nav>
+  <main id="view"></main>
+  <div id="printRoot"></div>
+  <div id="tip" role="tooltip"></div>
+  <dialog id="siteNotice"><div class="dialogHead"><h2 id="siteNoticeTitle"></h2></div><p id="siteNoticeMessage"></p><p><strong>www.pt2vhf.com</strong></p><div class="dialogFoot"><button id="siteNoticeOpen"></button><button id="siteNoticeOk" class="primary" autofocus></button></div></dialog>
+  <dialog id="updateNotice"><div class="dialogHead"><h2 id="updateNoticeTitle"></h2></div><p id="updateNoticeMessage"></p><pre id="updateNoticeNotes"></pre><div class="dialogFoot"><button id="updateNoticeLater"></button><button id="updateNoticeOpen" class="primary"></button></div></dialog>
+  <div id="toast" role="status"></div>
+  <script type="module" src="app.mjs"></script>
+</body></html>
