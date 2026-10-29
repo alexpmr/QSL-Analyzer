@@ -18,6 +18,18 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (29/10/2026): LoTW falha com "INVALID_RESPONSE" também com "Desde" vazio.** Depois de algumas
+  tentativas, a mesma conta (que antes trouxe 7 QSOs sem data) passou a falhar sempre, com ou sem data, com
+  "Sincronizar ao abrir o app" ligado. Hipótese principal: limite de requisições do LoTW (página "Page Request
+  Limit" / bloqueio temporário por consultas repetidas ao `lotwreport.adi`), agravado pela sincronização a
+  cada abertura. Corrigir junto com o item abaixo:
+  - reconhecer a página de limite/bloqueio do LoTW e mostrar mensagem clara ("o LoTW limitou as consultas;
+    tente novamente mais tarde"), sem novas tentativas imediatas;
+  - sincronização automática do LoTW no máximo uma vez a cada 24 h, e nunca repetir após erro de limite;
+  - sincronização incremental: depois do primeiro download completo, pedir só o que chegou desde a última
+    sincronização bem-sucedida (guardar a data/hora do último sucesso por plataforma);
+  - botão "Conferir com o app" e "Baixar e importar" desabilitados durante a consulta (evitar cliques
+    repetidos), com intervalo mínimo entre consultas manuais ao LoTW.
 - **Backlog (29/10/2026): LoTW com data em "Desde" falha com "INVALID_RESPONSE".** Com usuário/senha salvos e
   Desde = 01/01/2017, o download do LoTW termina em "Falha: INVALID_RESPONSE" (sem data, a mesma conta
   funciona, mas só traz o que chegou desde o último download). O app trata como inválida qualquer resposta sem
