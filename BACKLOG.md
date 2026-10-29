@@ -18,6 +18,11 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (29/10/2026): seletor do indicativo ativo no cabeçalho.** No topo, antes do indicador de QSOs e
+  indicativos, um menu suspenso para trocar o indicativo de estação ativo quando houver mais de um no banco
+  (com opção "Todos"); com um único indicativo, mostrar só esse, em destaque (sem menu). O indicativo ativo
+  filtra todo o app (dashboard, estatísticas, QSL, contatos, relatórios, envio às plataformas), fica salvo
+  nas preferências e aparece também no indicador de QSOs.
 - **Correção prioritária (29/10/2026): contatos "sumiram" ao atualizar da 0.3.0 para a 0.4.0.** Relato do
   mantenedor: após atualizar, o app abriu sem os logs importados. Causa provável: a troca do nome
   (`productName`) mudou a pasta de dados de `%APPDATA%\PT2VHF QSL Analyzer` para `...\PT2VHF QSL Manager` e a
