@@ -32,6 +32,12 @@ Itens solicitados e situação na versão 0.1.0.
   indicativo, sem "Restringir ao container"), Comparar (só estações), busca e textos de ajuda/README.
   A importação incremental continua sem duplicar QSOs (mesma estação, indicativo, banda, modo e minuto).
   Bancos já existentes com mais de um container devem ser unidos no container único, sem duplicar QSOs.
+- **Backlog (29/10/2026): aba "Importar/Exportar" no menu superior.** Unir a importação à aba Exportar
+  numa única aba do menu superior, onde o usuário tanto importa logs para o app (arquivos ADIF e demais
+  formatos, e plataformas online) quanto exporta. Na importação, os contatos que já existirem no banco são
+  ignorados. Durante a importação abre um popup com a barra de progresso e as contagens, atualizadas em
+  tempo real, de contatos importados e de contatos ignorados por já existirem (e o total processado), com
+  o resumo final ao terminar.
 - **Ajuste de CI antes da próxima versão:** o job de release usa `gh release upload --clobber`; um push
   na `main` sem mudar a versão sobrescreveria os pacotes da release já publicada no site (SHA-256 diferente).
   Pular o upload quando a release da versão já existir.
