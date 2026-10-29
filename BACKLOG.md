@@ -18,7 +18,37 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
-(nenhum)
+- **Backlog (29/10/2026): recursos de logbook completo (referência: softwares de log consolidados do mercado).**
+  Ordem sugerida de prioridade; cada item pode virar uma versão.
+  1. **Janela de registro ao vivo:** lançar o QSO na hora (data/hora UTC automáticas), busca do indicativo
+     ao digitar (QRZ.com, HamQTH e HamCall.net) preenchendo nome, QTH, quadrícula e DXCC, e "já trabalhado"
+     com os contatos anteriores e indicadores de status (entidade/banda/modo novos, falta confirmar).
+  2. **Controle do rádio (CAT):** ler frequência, banda e modo do rádio (Kenwood, Icom, Yaesu, Elecraft,
+     FlexRadio e outros) via Omni-Rig, Hamlib/rigctld ou flrig; preencher o QSO sozinho e sintonizar o rádio
+     ao clicar num spot.
+  3. **Registro automático de modos digitais:** receber os QSOs do WSJT-X, JTDX e JTAlert pela rede local
+     (UDP) e gravar FT8/FT4/JT65 em tempo real, com frequência, modo e relatório.
+  4. **DX Cluster:** cliente para DX Spider, CC Cluster e AR Cluster (telnet), incluindo spots do RBN;
+     mapa de bandas (até 10 bandas), spots coloridos pelo status (entidade/banda/modo/slot novo, trabalhado,
+     confirmado), alertas do que falta e clique para sintonizar.
+  5. **Sincronização automática ao registrar:** enviar cada QSO novo ao QRZ Logbook, eQSL, Club Log e
+     HRDLog.net (opção por plataforma), além do upload/download do LoTW com um clique.
+  6. **Concursos:** integração com o N1MM Logger+ (contatos recebidos pela rede), verificação de duplicado
+     instantânea, multiplicadores em tempo real e Cabrillo (já existe).
+  7. **POTA/SOTA:** campos de referência (`POTA_REF`, `MY_POTA_REF`, `SOTA_REF`, `MY_SOTA_REF`), modo
+     ativador e caçador, exportação ADIF por ativação para os portais e estatísticas de parques/cumes.
+  8. **Mais diplomas:** CQ DX Marathon, WAC, CQ Countries, Worked All US Counties, POTA/SOTA caçador e
+     ativador, além dos atuais; acompanhamento QRP (potência ≤ 5 W) e relatório de pedido (lista de QSOs a
+     submeter, ex.: DXCC via LoTW).
+  9. **Mapa da linha cinzenta e clima espacial:** greyline em tempo real e boletins WWV/WCY (do cluster) ou
+     NOAA; abrir a localização de uma estação no Google Earth com um clique (KML já existe).
+  10. **Log compartilhado em rede:** várias posições (Field Day, multioperador) gravando no mesmo log pela
+      rede local.
+  11. **QSL em papel:** impressão de etiquetas e cartões QSL, filas "a enviar"/"a receber" (birô, direto,
+      OQRS) e gravação do áudio do QSO.
+  12. **Backup na nuvem:** atalhos para Dropbox, OneDrive e Google Drive no backup automático (hoje já dá para
+      escolher uma pasta sincronizada).
+  13. **Banco SQLite:** trocar o arquivo JSON por SQLite (gravação só do que mudou, logs com milhões de QSOs).
 
 ## Resolvidos na 0.4.0 (29/10/2026)
 
