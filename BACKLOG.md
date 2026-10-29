@@ -18,6 +18,20 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (29/10/2026): backup e restauração de tudo em Configurações → Banco de dados.** Um único arquivo de
+  backup com **todo** o estado do app: contatos, preferências, painéis salvos, modelos de relatório, bloco de
+  notas, registro de atividade, cache das fichas (dados e fotos do QRZ/HamQTH), CTY.DAT carregado e
+  configurações das plataformas. Hoje existe só "Backup do banco" (JSON) no menu Logs; levar para
+  Configurações → Banco de dados (mantendo atalho em Logs) e completar:
+  - **credenciais:** hoje ficam criptografadas pelo Windows e não abrem em outro computador; no backup,
+    perguntar se inclui as senhas/chaves e, se sim, protegê-las com uma senha do backup (sem ela, restaura
+    tudo menos as credenciais);
+  - **restaurar:** mostrar o conteúdo do backup (data, versão, nº de contatos e estações) antes de aplicar,
+    pedir confirmação, criar automaticamente um backup do estado atual antes de substituir e aceitar
+    backups de versões anteriores (inclusive o JSON antigo);
+  - **integridade:** arquivo com versão e soma de verificação; recusar arquivo corrompido sem mexer no banco;
+  - **backup automático** opcional (ex.: diário ou a cada abertura), mantendo os N mais recentes na pasta de
+    dados, com opção de escolher a pasta (ex.: nuvem).
 - **Backlog (29/10/2026): inserir, alterar e apagar um contato.** Formulário de QSO com os campos principais
   (indicativo, data/hora UTC, banda/frequência, modo/submodo, RST enviado/recebido, estação, operador,
   quadrículas, nome, QTH, comentário, concurso/troca, status de QSL papel/LoTW/eQSL) e acesso aos demais campos
