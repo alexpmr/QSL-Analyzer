@@ -18,7 +18,18 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
-(nenhum)
+- **Backlog (29/10/2026): todo download e toda atualização OTA contabilizados.** Garantir, de ponta a ponta,
+  que cada download conte exatamente uma vez no contador do site (`download.php`, produto `qsl`):
+  - download manual pela página `/qsl` (instalador e portátil, e futuras plataformas Linux/macOS);
+  - link direto `https://www.pt2vhf.com/downloads/qsl-analyzer/<arquivo>` (rewrite do `.htaccess` para o
+    `download.php`), inclusive o usado pelo OTA do app;
+  - atualização OTA do app (User-Agent `PT2VHF-QSL-Analyzer/x.y.z`), registrada também em `ota` no
+    `mode=stats`; HEAD, retomadas (Range) e falhas de conferência não podem somar de novo;
+  - versões antigas que só abrem a página (0.1.0 e 0.2.0) contam pelo download manual.
+  - Conferir: o OTA não segue redirecionamento (o rewrite precisa responder 200 direto); cada `files[]` do
+    `updates.json` tem `counterKey`; ampliar `scripts/test_qsl_download.php` (site) e os testes do app
+    para simular o download do atualizador e verificar +1 exatamente uma vez, e conferir em produção
+    (`download.php?mode=stats`) após a próxima publicação.
 
 ## Resolvidos na 0.3.0 (29/10/2026)
 
