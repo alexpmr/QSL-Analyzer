@@ -40,6 +40,11 @@ function renderHeader() {
   $('#appVersion').textContent = 'v' + (info.version || APP_VERSION);
   $('#subtitle').textContent = t('subtitle');
   $('#dbPill').textContent = t('dbPill', { n: db.qsos.length.toLocaleString(), s: DB.stations(db).length });
+  const st = DB.stations(db).filter(s => s.station);
+  if (db.prefs.activeStation && !st.some(s => s.station === db.prefs.activeStation)) db.prefs.activeStation = '';
+  $('#stationSwitch').innerHTML = st.length > 1
+    ? `<select id="activeStation" class="stationSelect" title="${esc(t('activeStation'))}"><option value="">${esc(t('allStations'))}</option>${options(st.map(s => s.station), db.prefs.activeStation || '')}</select>`
+    : st.length ? `<span class="pill stationOne" title="${esc(t('activeStation'))}">${esc(st[0].station)}</span>` : '';
   $('#themeButton').textContent = db.prefs.theme === 'light' ? '☾ ' + t('dark') : '☀ ' + t('light');
   const lang = LANGUAGES.find(l => l.code === db.prefs.language) || LANGUAGES[0];
   $('#languageFlag').src = `flags/${lang.flag}.svg`;
@@ -88,8 +93,10 @@ const options = (list, selected, labelFn = v => v) => list.map(v => `<option val
 const homePosition = () => gridToLatLon(db.prefs.myGrid) || null;
 const pointsFor = () => S.pointsFn(db.prefs.pointsRule, cty, db.prefs.myCall);
 
+// Indicativo ativo escolhido no cabeçalho: restringe todas as análises a essa estação.
 function filteredQsos(filter = ui.filter) {
-  return S.byTime(DB.applyFilter(db.qsos, filter));
+  const active = db.prefs.activeStation;
+  return S.byTime(DB.applyFilter(db.qsos, active && !filter.stations?.length ? { ...filter, stations: [active] } : filter));
 }
 
 function filterValues() {
@@ -358,6 +365,7 @@ function openQsoForm(id = null, presetCall = '') {
   const extra = Object.entries(q?.extra || {}).map(([k, val]) => `${k}=${val}`).join('\n');
   $('#qsoBody').innerHTML = `<form id="qsoForm" data-id="${id || ''}"><div class="dialogHead"><h2>${esc(t(q ? 'editContact' : 'newContact'))}</h2></div>
     <div class="fields">${input('call', 'text', 'required maxlength="20" autofocus')}${input('date', 'date', 'required')}${input('time', 'time', 'required')}${input('band', 'text', 'list="bandList" maxlength="8"')}${input('freq', 'text', 'inputmode="decimal" placeholder="14.074"')}${input('mode', 'text', 'required list="modeList" maxlength="12"')}${input('submode')}${input('rstS')}${input('rstR')}${input('station', 'text', 'required maxlength="20"')}${input('operator')}${input('myGrid')}${input('grid')}${input('name')}${input('qth')}${input('contest')}${input('stx')}${input('srx')}</div>
+    <div id="workedBefore" class="workedBefore"></div>
     <label><span>${esc(t('qf_comment'))}</span><input name="comment" value="${esc(v.comment)}"></label>
     <h3>QSL</h3><div class="qslFlags">${QSL_FLAGS.map(flag).join('')}</div>
     <details><summary>${esc(t('otherAdifFields'))}</summary><textarea name="extra" rows="5" placeholder="IOTA=SA-001&#10;SOTA_REF=PY/SP-001">${esc(extra)}</textarea></details>
@@ -366,7 +374,23 @@ function openQsoForm(id = null, presetCall = '') {
     <p id="qsoError" class="error"></p>
     <div class="dialogFoot">${q ? `<button type="button" class="dangerButton" data-qso-delete="${q.id}">${esc(t('delete'))}</button>` : ''}<button type="button" data-qso-cancel>${esc(t('cancel'))}</button><button type="submit" class="primary">${esc(t('save'))}</button></div></form>`;
   const dlg = $('#qsoDialog');
+  $('#qsoForm').addEventListener('input', e => { if (['call', 'band', 'mode'].includes(e.target.name)) workedBefore(id); });
+  workedBefore(id);
   if (!dlg.open) dlg.showModal();
+}
+
+// Indicador "já trabalhado" ao digitar o indicativo: contatos anteriores, bandas e se o slot banda/modo é novo.
+function workedBefore(id) {
+  const form = $('#qsoForm'), box = $('#workedBefore');
+  if (!form || !box) return;
+  const call = form.call.value.trim().toUpperCase(), band = form.band.value.trim().toLowerCase(), mode = form.mode.value.trim().toUpperCase();
+  if (call.length < 3) { box.innerHTML = ''; return; }
+  const list = db.qsos.filter(q => q.call === call && q.id !== id);
+  if (!list.length) { box.innerHTML = `<span class="badge new">${esc(t('wbNew'))}</span>`; return; }
+  const bands = sortBands([...new Set(list.map(q => q.band))]), last = list.reduce((a, b) => (b.ts > a.ts ? b : a));
+  const slot = list.filter(q => (!band || q.band === band) && (!mode || q.mode === mode));
+  const slotTxt = band || mode ? (slot.length ? (slot.some(DB.isConfirmed) ? t('wbSlotConfirmed') : t('wbSlotWorked')) : t('wbSlotNew')) : '';
+  box.innerHTML = `<span class="badge">${esc(t('wbWorked', { n: list.length }))}</span> ${esc(bands.join(' '))} · ${esc(t('lastQso'))}: ${esc(fmtDate(last.ts))}${last.name ? ' · ' + esc(last.name) : ''}${list.some(DB.isConfirmed) ? ' · ✓ QSL' : ''}${slotTxt ? ` <span class="badge${slot.length ? '' : ' new'}">${esc(slotTxt)}</span>` : ''}`;
 }
 
 function saveQsoForm(form) {
@@ -496,7 +520,7 @@ function backupSection() {
       <label><span>${esc(t('autoBackup'))}</span><select name="autoBackup">${options(['off', 'daily', 'open'], p.autoBackup || 'off', o => t('autoBackup_' + o))}</select></label>
       <label><span>${esc(t('backupKeep'))}</span><input name="backupKeep" type="number" min="1" max="100" value="${Number(p.backupKeep) || 5}"></label>
       <label><span>${esc(t('backupFolder'))}</span><input name="backupFolder" value="${esc(p.backupFolder || '')}" placeholder="${esc(ui.backupDefaultDir || '')}" readonly></label>
-      <div class="formActions left"><button type="button" id="chooseBackupFolder">${esc(t('chooseFolder'))}</button><button type="button" id="defaultBackupFolder">${esc(t('defaultFolder'))}</button><button type="submit">${esc(t('save'))}</button></div>
+      <div class="formActions left">${(ui.cloudFolders || []).map(c => `<button type="button" data-cloud-folder="${esc(c.dir)}" title="${esc(c.dir)}">☁ ${esc(c.name)}</button>`).join('')}<button type="button" id="chooseBackupFolder">${esc(t('chooseFolder'))}</button><button type="button" id="defaultBackupFolder">${esc(t('defaultFolder'))}</button><button type="submit">${esc(t('save'))}</button></div>
     </form><p class="help">${esc(t('autoBackupHelp', { last: p.lastAutoBackup ? fmtDateTime(p.lastAutoBackup) : '—' }))}</p>`;
 }
 
@@ -1181,6 +1205,7 @@ document.addEventListener('click', async e => {
   if (el.id === 'resetCty') { await backend.saveCty(''); await loadCountryFile(); toast(t('ctyLoaded', { v: cty.version || '—' })); return render(); }
   if (el.id === 'backupNow') return backupNow();
   if (el.id === 'restoreNow') return restoreBackup();
+  if (el.dataset.cloudFolder) { db.prefs.backupFolder = el.dataset.cloudFolder; if (db.prefs.autoBackup === 'off') db.prefs.autoBackup = 'daily'; persist(); toast(t('cloudFolderSet')); return render(); }
   if (el.id === 'chooseBackupFolder') { const dir = await backend.chooseFolder(); if (dir) { db.prefs.backupFolder = dir; persist(); render(); } return; }
   if (el.id === 'defaultBackupFolder') { db.prefs.backupFolder = ''; persist(); return render(); }
   if (el.id === 'copyDiag') { await navigator.clipboard?.writeText(diagnostics()); return toast(t('copied')); }
@@ -1264,6 +1289,7 @@ document.addEventListener('submit', async e => {
 });
 
 document.addEventListener('change', e => {
+  if (e.target.id === 'activeStation') { db.prefs.activeStation = e.target.value; persist(); return render(); }
   if (e.target.id === 'savedFilterSel' && e.target.value) { const f = db.prefs.savedFilters?.[e.target.value]; if (f) setFilter(structuredClone(f)); }
   // Filtros "vivos": selects e datas aplicam imediatamente.
   if (e.target.matches?.('select[data-filter], input[type=date][data-filter]')) setFilter(readFilterBar());
@@ -1438,6 +1464,11 @@ async function checkUpdate(manual = false) {
   } catch { btn.textContent = t('checkUpdate'); if (manual) toast(t('updateCheckFailed'), true); }
 }
 
+async function showMigration() {
+  const m = await backend.takeMigration().catch(() => null);
+  if (m?.qsos) toast(t('migratedData', { n: m.qsos.toLocaleString() }));
+}
+
 async function showNews() {
   const news = await backend.takeNews().catch(() => null);
   if (!news) return;
@@ -1456,7 +1487,7 @@ function siteNotice() {
   $('#siteNoticeOk').textContent = t('understood');
   $('#siteNoticeLink').onclick = e => { e.preventDefault(); backend.openExternal('https://www.pt2vhf.com/qsl'); };
   $('#siteNoticeOk').onclick = () => dlg.close();
-  dlg.addEventListener('close', async () => { await showNews(); checkUpdate(false); autoSyncPlatforms(); }, { once: true });
+  dlg.addEventListener('close', async () => { await showMigration(); await showNews(); checkUpdate(false); autoSyncPlatforms(); }, { once: true });
   dlg.showModal();
   $('#siteNoticeOk').focus();
 }
@@ -1475,6 +1506,7 @@ async function start() {
   document.body.classList.remove('loading');
   if (isDesktop && !info.smoke) siteNotice();
   backend.backupDir('').then(d => (ui.backupDefaultDir = d)).catch(() => {});
+  backend.cloudFolders().then(l => (ui.cloudFolders = l || [])).catch(() => {});
   autoBackup();
   $('#entityDialog').addEventListener('close', () => (ui.entityStack = []));
   view.addEventListener('toggle', e => { if (e.target.matches?.('.filterBox')) ui.filtersOpen = e.target.open; }, true);

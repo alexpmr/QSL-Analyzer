@@ -338,3 +338,9 @@ dialog.qsoDialog>div>form>label{display:flex;flex-direction:column;gap:5px;margi
 .platformActions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .platformActions button{font-size:12px;padding:7px 10px}
 .platformStatus{margin:8px 0 0}
+
+.stationSelect{font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:5px 10px;background:transparent}
+.stationOne{font-weight:700;color:var(--accent);border-color:var(--accent)}
+.stationSelect option{background:var(--panel);color:var(--text)}
+.workedBefore{min-height:22px;margin:8px 0;font-size:13px;color:var(--muted)}
+.workedBefore .badge.new{color:#0b1523;background:var(--accent)}

@@ -1,6 +1,6 @@
 {
   "name": "pt2vhf-qsl-manager",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Gerenciador de contatos e confirmações QSL para radioamadores: importação, edição, sincronização com plataformas, estatísticas e diplomas",
   "author": {
@@ -43,7 +43,7 @@
         "portable"
       ],
       "icon": "build/icon.png",
-      "artifactName": "PT2VHF-QSL-Analyzer-${version}-win-${arch}-setup.${ext}",
+      "artifactName": "PT2VHF-QSL-Manager-${version}-win-${arch}-setup.${ext}",
       "signAndEditExecutable": false
     },
     "nsis": {
@@ -54,7 +54,7 @@
       "deleteAppDataOnUninstall": false
     },
     "portable": {
-      "artifactName": "PT2VHF-QSL-Analyzer-${version}-win-${arch}-portable.${ext}"
+      "artifactName": "PT2VHF-QSL-Manager-${version}-win-${arch}-portable.${ext}"
     },
     "linux": {
       "target": [
@@ -66,10 +66,10 @@
       "category": "HamRadio",
       "maintainer": "Alex Rodrigues, PT2VHF <alexpmr@gmail.com>",
       "synopsis": "Análise de logs de radioamador e confirmações QSL",
-      "artifactName": "PT2VHF-QSL-Analyzer-${version}-linux-${arch}.${ext}"
+      "artifactName": "PT2VHF-QSL-Manager-${version}-linux-${arch}.${ext}"
     },
     "deb": {
-      "artifactName": "pt2vhf-qsl-analyzer_${version}_${arch}.${ext}"
+      "artifactName": "pt2vhf-qsl-manager_${version}_${arch}.${ext}"
     },
     "mac": {
       "target": [
@@ -80,10 +80,10 @@
       "identity": "-",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "artifactName": "PT2VHF-QSL-Analyzer-${version}-mac-${arch}.${ext}"
+      "artifactName": "PT2VHF-QSL-Manager-${version}-mac-${arch}.${ext}"
     },
     "dmg": {
-      "artifactName": "PT2VHF-QSL-Analyzer-${version}-mac-${arch}.${ext}"
+      "artifactName": "PT2VHF-QSL-Manager-${version}-mac-${arch}.${ext}"
     }
   },
   "homepage": "https://www.pt2vhf.com/qsl"

@@ -38,15 +38,33 @@ async function readText(file){try{return await fs.readFile(file,'utf8');}catch{r
 
 const KINDS={qslbackup:['Backup PT2VHF QSL Manager','qslbackup'],adi:['ADIF','adi'],csv:['CSV','csv'],txt:['Texto','txt'],png:['PNG','png'],pdf:['PDF','pdf'],html:['HTML','html'],json:['JSON','json'],kml:['KML','kml'],cabrillo:['Cabrillo','log'],adif:['ADIF','adi']};
 
+const countQsos=text=>{try{const db=JSON.parse(text);return Array.isArray(db?.qsos)?db.qsos.length:0;}catch{return 0;}};
+async function migrateData(){
+  if(countQsos(await readText(dbFile)))return;
+  const dirs=[...new Set([dataDir,...['PT2VHF QSL Analyzer','pt2vhf-qsl-analyzer','PT2VHF QSL Manager','pt2vhf-qsl-manager'].map(n=>path.join(app.getPath('appData'),n))])];
+  let best=null;
+  for(const dir of dirs)for(const f of ['qsl-analyzer.db.json','qsl-analyzer.db.json.bak']){
+    const file=path.join(dir,f),n=countQsos(await readText(file));
+    if(n&&(!best||n>best.n))best={file,dir,n};
+  }
+  if(!best)return;
+  try{await fs.copyFile(dbFile,dbFile+'.empty-'+Date.now());}catch{}
+  await fs.copyFile(best.file,dbFile);
+  if(best.dir!==dataDir){
+    for(const f of ['cty.dat'])await fs.copyFile(path.join(best.dir,f),path.join(dataDir,f)).catch(()=>{});
+    const bk=path.join(best.dir,'backups');
+    for(const f of await fs.readdir(bk).catch(()=>[])){await fs.mkdir(path.join(dataDir,'backups'),{recursive:true});await fs.copyFile(path.join(bk,f),path.join(dataDir,'backups',f)).catch(()=>{});}
+  }
+  await fs.writeFile(path.join(dataDir,'migrated.json'),JSON.stringify({from:best.file,qsos:best.n}),'utf8');
+}
+
 async function start(){
   dataDir=portable?path.join(process.env.PORTABLE_EXECUTABLE_DIR,'data'):smoke?path.join(app.getPath('temp'),'qsl-analyzer-smoke-'+process.pid):app.getPath('userData');
   dbFile=path.join(dataDir,'qsl-analyzer.db.json');ctyFile=path.join(dataDir,'cty.dat');
   await fs.mkdir(dataDir,{recursive:true});
-  // Até a 0.3.0 o programa se chamava PT2VHF QSL Analyzer: copia os dados da pasta antiga na primeira abertura.
-  if(!portable&&!smoke&&!(await readText(dbFile))){
-    const old=path.join(app.getPath('appData'),'PT2VHF QSL Analyzer');
-    for(const f of ['qsl-analyzer.db.json','qsl-analyzer.db.json.bak','cty.dat','pending-news.json'])await fs.copyFile(path.join(old,f),path.join(dataDir,f)).catch(()=>{});
-  }
+  // Recupera os dados quando o banco atual está vazio: pasta do antigo PT2VHF QSL Analyzer ou cópia .bak.
+  // Nunca sobrescreve um banco que já tenha contatos.
+  if(!smoke)await migrateData().catch(error=>console.error('migrate',error));
   // Confirma ao script de atualização que a versão nova abriu corretamente.
   if(process.env.QSL_UPDATE_CONFIRM_FILE&&path.resolve(process.env.QSL_UPDATE_CONFIRM_FILE)===path.join(dataDir,'updates','update-ready.json'))await fs.writeFile(process.env.QSL_UPDATE_CONFIRM_FILE,JSON.stringify({version:app.getVersion()}),'utf8').catch(()=>{});
   // Limpa pacotes baixados de atualizações anteriores.
@@ -185,6 +203,20 @@ async function start(){
     return true;
   });
   // Novidades mostradas uma única vez na primeira abertura depois de atualizar.
+  // Pastas sincronizadas de nuvem detectadas no perfil do usuário (atalhos para o backup automático).
+  handle('cloud-folders',async()=>{
+    const home=os.homedir(),found=[];
+    const add=async(name,dir)=>{try{if((await fs.stat(dir)).isDirectory()&&!found.some(f=>f.dir===dir))found.push({name,dir:path.join(dir,'PT2VHF QSL Manager')});}catch{}};
+    if(process.env.OneDrive)await add('OneDrive',process.env.OneDrive);
+    if(process.env.OneDriveConsumer)await add('OneDrive',process.env.OneDriveConsumer);
+    await add('OneDrive',path.join(home,'OneDrive'));
+    await add('Dropbox',path.join(home,'Dropbox'));
+    for(const n of ['Google Drive','My Drive','Meu Drive'])await add('Google Drive',path.join(home,n));
+    for(const l of ['G:','H:'])for(const n of ['My Drive','Meu Drive'])if(process.platform==='win32')await add('Google Drive',path.join(l+'\\',n));
+    await add('iCloud Drive',path.join(home,'iCloudDrive'));
+    return found;
+  });
+  handle('take-migration',async()=>{const f=path.join(dataDir,'migrated.json'),text=await readText(f);if(!text)return null;await fs.rm(f,{force:true}).catch(()=>{});try{return JSON.parse(text);}catch{return null;}});
   handle('take-news',async()=>{
     const f=path.join(dataDir,'pending-news.json'),text=await readText(f);
     if(!text)return null;

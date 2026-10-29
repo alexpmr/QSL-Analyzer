@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('qslAnalyzer',{
   downloadUpdate:()=>call('download-update'),
   installUpdate:()=>call('install-update'),
   takeNews:()=>call('take-news'),
+  takeMigration:()=>call('take-migration'),
+  cloudFolders:()=>call('cloud-folders'),
   tqslUpload:request=>call('tqsl-upload',request),
   backupWrite:request=>call('backup-write',request),
   backupDir:folder=>call('backup-dir',folder),

@@ -1,5 +1,13 @@
 # Notas de versão
 
+## 0.5.0 - 2026-10-29
+
+- Recuperação automática dos contatos: se o banco abrir vazio, o programa procura e restaura os dados da versão anterior (inclusive da pasta do antigo QSL Analyzer) e avisa quantos contatos recuperou. Um banco com contatos nunca é sobrescrito.
+- Indicativo ativo no cabeçalho: com vários indicativos, um menu troca a estação analisada em todo o app (ou "Todos"); com um só, ele aparece em destaque.
+- Formulário de contato mostra se o indicativo já foi trabalhado, em quais bandas, o último QSO e se a banda/modo é novo, trabalhado ou confirmado.
+- Backup automático: atalhos para gravar direto na pasta do OneDrive, Dropbox, Google Drive ou iCloud Drive detectados no computador.
+- Instaladores com o nome novo: PT2VHF-QSL-Manager.
+
 ## 0.4.0 - 2026-10-29
 
 - Novo nome: **PT2VHF QSL Manager**, agora um gerenciador de contatos e confirmações QSL. Instalações anteriores são atualizadas e os dados são preservados.

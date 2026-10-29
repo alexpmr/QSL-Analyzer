@@ -115,5 +115,5 @@ jobs:
             echo "Release $RELEASE_TAG já existe; nada a enviar (aumente a versão para publicar)."
             exit 0
           fi
-          gh release create "$RELEASE_TAG" --target "$RELEASE_COMMIT" --title "PT2VHF QSL Analyzer $RELEASE_TAG" --notes-file release-notes.md
+          gh release create "$RELEASE_TAG" --target "$RELEASE_COMMIT" --title "PT2VHF QSL Manager $RELEASE_TAG" --notes-file release-notes.md
           gh release upload "$RELEASE_TAG" $(ls *.exe *.AppImage *.deb *.tar.gz *.dmg 2>/dev/null) SHA256SUMS.txt

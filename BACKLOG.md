@@ -18,24 +18,6 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
-- **Backlog (29/10/2026): seletor do indicativo ativo no cabeçalho.** No topo, antes do indicador de QSOs e
-  indicativos, um menu suspenso para trocar o indicativo de estação ativo quando houver mais de um no banco
-  (com opção "Todos"); com um único indicativo, mostrar só esse, em destaque (sem menu). O indicativo ativo
-  filtra todo o app (dashboard, estatísticas, QSL, contatos, relatórios, envio às plataformas), fica salvo
-  nas preferências e aparece também no indicador de QSOs.
-- **Correção prioritária (29/10/2026): contatos "sumiram" ao atualizar da 0.3.0 para a 0.4.0.** Relato do
-  mantenedor: após atualizar, o app abriu sem os logs importados. Causa provável: a troca do nome
-  (`productName`) mudou a pasta de dados de `%APPDATA%\PT2VHF QSL Analyzer` para `...\PT2VHF QSL Manager` e a
-  cópia automática na primeira abertura não aconteceu. Corrigir: procurar o banco na pasta antiga sempre que o
-  banco atual estiver vazio (inclusive se já houver um banco novo vazio criado), copiar banco, `.bak`, CTY.DAT e
-  backups, avisar o usuário e registrar no histórico; nunca sobrescrever um banco com contatos. Testar a
-  atualização real 0.3.0 → nova versão no Windows (instalado e portátil) antes de publicar.
-- **Backlog (29/10/2026): pacotes com o nome novo na próxima versão.** Gerar os binários como
-  `PT2VHF-QSL-Manager-<versão>-win-x64-setup.exe` / `-portable.exe` (e Linux/macOS quando voltarem): ajustar
-  `artifactName` no `package.json`, os nomes esperados pelo workflow de release e, no site, o
-  `scripts/sync_qsl_release.py`, o padrão de nomes do `prop_parts.php` e a regra de download do `.htaccess`.
-  A 0.4.0 já aceita os dois nomes no OTA; quem ainda estiver na 0.3.0 (que só aceita o nome antigo) atualiza
-  pela página do site. Manter a pasta `downloads/qsl-analyzer/`, o produto `qsl` e os contadores.
 - **Backlog (29/10/2026): aproveitar o N1MM Logger+ além do UDP** (manual oficial: Features, Technical
   Information, Call History, Statistics, External UDP Messages).
   1. **Importar o banco do N1MM (.s3db, SQLite)** de `Documentos\N1MM Logger+\Databases`: listar os concursos
@@ -118,6 +100,29 @@ Itens solicitados e situação na versão 0.1.0.
   12. **Backup na nuvem:** atalhos para Dropbox, OneDrive e Google Drive no backup automático (hoje já dá para
       escolher uma pasta sincronizada).
   13. **Banco SQLite:** trocar o arquivo JSON por SQLite (gravação só do que mudou, logs com milhões de QSOs).
+
+  Situação na 0.5.0: itens 1 (parcial: indicador "já trabalhado" no formulário de contato; consulta QRZ/HamQTH já existe na ficha do indicativo) e 12 (atalhos de pasta OneDrive/Dropbox/Google Drive/iCloud para o backup automático) feitos. Pendentes: janela de entrada ao vivo com consulta automática, itens 5, 10 e 13, e N1MM.
+
+## Resolvidos na 0.5.0 (29/10/2026)
+
+- **[Resolvido] Backlog (29/10/2026): seletor do indicativo ativo no cabeçalho.** No topo, antes do indicador de QSOs e
+  indicativos, um menu suspenso para trocar o indicativo de estação ativo quando houver mais de um no banco
+  (com opção "Todos"); com um único indicativo, mostrar só esse, em destaque (sem menu). O indicativo ativo
+  filtra todo o app (dashboard, estatísticas, QSL, contatos, relatórios, envio às plataformas), fica salvo
+  nas preferências e aparece também no indicador de QSOs.
+- **[Resolvido] Correção prioritária (29/10/2026): contatos "sumiram" ao atualizar da 0.3.0 para a 0.4.0.** Relato do
+  mantenedor: após atualizar, o app abriu sem os logs importados. Causa provável: a troca do nome
+  (`productName`) mudou a pasta de dados de `%APPDATA%\PT2VHF QSL Analyzer` para `...\PT2VHF QSL Manager` e a
+  cópia automática na primeira abertura não aconteceu. Corrigir: procurar o banco na pasta antiga sempre que o
+  banco atual estiver vazio (inclusive se já houver um banco novo vazio criado), copiar banco, `.bak`, CTY.DAT e
+  backups, avisar o usuário e registrar no histórico; nunca sobrescrever um banco com contatos. Testar a
+  atualização real 0.3.0 → nova versão no Windows (instalado e portátil) antes de publicar.
+- **[Resolvido] Backlog (29/10/2026): pacotes com o nome novo na próxima versão.** Gerar os binários como
+  `PT2VHF-QSL-Manager-<versão>-win-x64-setup.exe` / `-portable.exe` (e Linux/macOS quando voltarem): ajustar
+  `artifactName` no `package.json`, os nomes esperados pelo workflow de release e, no site, o
+  `scripts/sync_qsl_release.py`, o padrão de nomes do `prop_parts.php` e a regra de download do `.htaccess`.
+  A 0.4.0 já aceita os dois nomes no OTA; quem ainda estiver na 0.3.0 (que só aceita o nome antigo) atualiza
+  pela página do site. Manter a pasta `downloads/qsl-analyzer/`, o produto `qsl` e os contadores.
 
 ## Resolvidos na 0.4.0 (29/10/2026)
 
