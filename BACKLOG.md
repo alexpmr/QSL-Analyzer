@@ -18,6 +18,18 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (29/10/2026): LoTW com data em "Desde" falha com "INVALID_RESPONSE".** Com usuário/senha salvos e
+  Desde = 01/01/2017, o download do LoTW termina em "Falha: INVALID_RESPONSE" (sem data, a mesma conta
+  funciona, mas só traz o que chegou desde o último download). O app trata como inválida qualquer resposta sem
+  `<eoh>`; o LoTW devolveu outra coisa (provável página de erro/ocupado, tempo de geração do relatório ou
+  rejeição do parâmetro de data). Corrigir:
+  - mostrar o motivo real: status HTTP e o texto da resposta do LoTW (sem a senha) no erro e no registro
+    de atividade, em vez de só "INVALID_RESPONSE";
+  - conferir o formato de data aceito por `qso_qsorxsince` (AAAA-MM-DD) e, se necessário, usar
+    `qso_startdate`; validar a data antes de enviar;
+  - tratar LoTW ocupado/lento (respostas grandes): tempo limite maior e nova tentativa com espera;
+  - se o relatório for grande demais, baixar em faixas de datas (por ano) e juntar;
+  - testes com respostas simuladas de erro, ocupado e relatório grande.
 - **Backlog (29/10/2026): data inicial padrão 01/01/1980 nos downloads das plataformas.** Em LoTW, QRZ.com,
   eQSL e Club Log, o campo de data inicial ("Desde") vem preenchido com 01/01/1980 (editável), e é essa data
   que vai na consulta quando o usuário não mudar: LoTW `qso_qsorxsince=1980-01-01` (substitui o 1900-01-01
