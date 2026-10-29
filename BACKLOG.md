@@ -20,6 +20,8 @@ Itens solicitados e situação na versão 0.1.0.
 
 - **Backlog (29/10/2026): recursos de logbook completo (referência: softwares de log consolidados do mercado).**
   Ordem sugerida de prioridade; cada item pode virar uma versão.
+  **Decisão do mantenedor (29/10/2026):** na próxima versão implementar os itens **1, 5, 10, 12 e 13**.
+  Os itens 2 (CAT), 3 (WSJT-X/JTDX/JTAlert) e 4 (DX Cluster) ficam para depois; os demais seguem no backlog.
   1. **Janela de registro ao vivo:** lançar o QSO na hora (data/hora UTC automáticas), busca do indicativo
      ao digitar (QRZ.com, HamQTH e HamCall.net) preenchendo nome, QTH, quadrícula e DXCC, e "já trabalhado"
      com os contatos anteriores e indicadores de status (entidade/banda/modo novos, falta confirmar).
