@@ -24,6 +24,17 @@ Itens solicitados e situação na versão 0.1.0.
   (`products.js` e traduções em `assets/js/locales/*`). Reescrever os textos sem a referência, de forma
   natural. Não registrar em nenhum texto público (changelog, notas da versão, página) que a referência foi
   retirada.
+- **Backlog (29/10/2026): atualização OTA automática, como nos demais apps PT2VHF.** Hoje o aviso de versão
+  nova só abre a página do projeto. Deve seguir o fluxo do Prop Tool/Sat Tool:
+  - consultar `https://www.pt2vhf.com/update.php?product=qsl&platform=<plataforma>&kind=<installer|portable>`
+    conforme o pacote em uso (instalado ou portátil) e mostrar a versão e as notas;
+  - "Atualizar agora" baixa o pacote certo pela URL do site (passa pelo `download.php`, contando uma vez
+    como OTA pelo User-Agent `PT2VHF-QSL-Analyzer/x.y.z`), com progresso (percentual, bytes e velocidade);
+  - conferir tamanho e SHA-256 do `updates.json` antes de instalar; se não conferir, descartar e avisar;
+  - instalado: executar o instalador NSIS em modo silencioso, fechar o app e reabrir na versão nova;
+    portátil: substituir o .exe com segurança (cópia de recuperação da versão anterior) e reabrir;
+  - preservar banco, preferências e credenciais; na primeira abertura após atualizar, mostrar as novidades
+    uma única vez; "Depois" adia o aviso até a próxima verificação.
 - **Backlog (29/10/2026): página do QSL Analyzer no site com screenshots e changelog no fim.** A galeria de
   screenshots e o histórico de versões (changelog completo, versão a versão) aparecem no fim da página `/qsl`.
 
