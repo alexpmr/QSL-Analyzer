@@ -18,6 +18,12 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (29/10/2026): data inicial padrão 01/01/1980 nos downloads das plataformas.** Em LoTW, QRZ.com,
+  eQSL e Club Log, o campo de data inicial ("Desde") vem preenchido com 01/01/1980 (editável), e é essa data
+  que vai na consulta quando o usuário não mudar: LoTW `qso_qsorxsince=1980-01-01` (substitui o 1900-01-01
+  da correção acima), eQSL `RcvdSince=19800101`, QRZ.com e Club Log com o parâmetro de data equivalente
+  quando a API oferecer (senão, histórico completo e filtro local pela data). Mostrar o campo em todos os
+  cartões de plataforma e explicar na ajuda.
 - **Correção (29/10/2026) — já no código, entra na próxima versão: LoTW importava só os QSOs recentes.**
   Sem data, o LoTW devolve apenas o que chegou desde o último download (o mantenedor recebeu 7 de milhares).
   Agora o pedido sempre envia `qso_qsorxsince` (vazio = 1900-01-01, histórico completo). Além disso, um
