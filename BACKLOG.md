@@ -18,6 +18,26 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (29/10/2026): inserir, alterar e apagar um contato.** Formulário de QSO com os campos principais
+  (indicativo, data/hora UTC, banda/frequência, modo/submodo, RST enviado/recebido, estação, operador,
+  quadrículas, nome, QTH, comentário, concurso/troca, status de QSL papel/LoTW/eQSL) e acesso aos demais campos
+  ADIF. Ações: **novo contato** (menu Logs e atalho na ficha do indicativo), **editar** e **apagar** a partir da
+  ficha, da busca e das tabelas de QSOs (com confirmação). Validar dados (data, banda × frequência, modo),
+  completar país/DXCC/zonas pelo CTY.DAT, avisar se o contato já existe (mesma regra da importação) e
+  registrar a alteração no registro de atividade.
+- **Backlog (29/10/2026): menu Logs com importar, exportar e sincronizar por fonte.** Para cada plataforma
+  (QRZ.com, LoTW, eQSL, Club Log), além de baixar/importar, permitir **enviar** os contatos do app e
+  **sincronizar nos dois sentidos**:
+  - QRZ.com: envio pela Logbook API (`ACTION=INSERT`, ADIF), com retorno de inseridos/duplicados/erros;
+  - LoTW: o envio exige assinatura digital pelo **TQSL** (certificado e localização da estação): gerar o
+    ADIF e chamar o TQSL instalado em linha de comando, ou orientar o envio pelo TQSL quando não estiver
+    instalado;
+  - eQSL: envio do ADIF pela importação do eQSL.cc (usuário/senha, apelido de QTH);
+  - Club Log: envio pela API (`putlogs`/tempo real) com a chave de API;
+  - sincronizar = baixar o que falta no app + enviar o que falta na plataforma (a partir da conferência
+    que já existe), marcando no app `*_QSL_SENT`/data de envio para não reenviar; escolher o que enviar
+    (tudo, só os que faltam, filtro atual) e mostrar o progresso e o resultado por plataforma;
+  - também exportar por fonte: ADIF já no formato esperado por cada plataforma.
 - **Backlog (29/10/2026): renomear o programa para "PT2VHF QSL Manager".** Trocar o nome em toda a interface
   (cabeçalho, título da janela, Sobre, ajuda, aviso do site, relatórios/PDF), nos atalhos e no instalador
   (`productName`), no README/CHANGELOG e na página do site (título, menu de projetos, catálogo, textos em
