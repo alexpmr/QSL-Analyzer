@@ -82,6 +82,13 @@ Itens solicitados e situação na versão 0.1.0.
   ignorados por já existirem, total) e o resumo final. Sem escolha de container (ver item de omitir
   containers); indicativo da estação padrão só quando o log não trouxer STATION_CALLSIGN. Renumerar o
   submenu Logs e atualizar ajuda e README.
+- **Backlog (29/10/2026): entidades clicáveis com ficha completa.** Assim como o indicativo, toda
+  entidade exibida deve ser clicável e abrir tudo sobre ela nos meus contatos: países/entidades DXCC
+  (ex.: matriz DXCC da aba QSL, DXCC first worked, DXCC/locator, mapas), quadrículas (grids), prefixos,
+  zonas CQ/ITU, continentes e estações. A ficha mostra os QSOs, estações trabalhadas, bandas e modos,
+  primeiro e último contato, status de QSL por banda (trabalhado/confirmado), quadrículas e mapa.
+- **Correção visual (29/10/2026):** na matriz DXCC da aba QSL, os títulos das colunas não ficam alinhados
+  com os valores (DXCC e Continente deslocados); alinhar cabeçalho e células.
 - **Ajuste de CI antes da próxima versão:** o job de release usa `gh release upload --clobber`; um push
   na `main` sem mudar a versão sobrescreveria os pacotes da release já publicada no site (SHA-256 diferente).
   Pular o upload quando a release da versão já existir.
