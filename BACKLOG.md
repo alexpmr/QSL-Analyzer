@@ -18,6 +18,32 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (29/10/2026): integração com o N1MM Logger+ (mensagens UDP externas).** Fonte: manual oficial,
+  "External UDP Messages" (n1mmwp.hamdocs.com/appendices/external-udp-broadcasts/). No N1MM: Config → Config
+  Ports → Broadcast Data, destino `127.0.0.1:12060` (ou o IP do PC do QSL Manager; vários destinos separados por
+  espaço). Implementar no processo principal um receptor UDP (porta configurável, padrão 12060, aberto com
+  SO_REUSEADDR/SO_BROADCAST para dividir a porta com outros programas), com liga/desliga e indicador "N1MM
+  conectado" (último pacote recebido):
+  - `<contactinfo>`: grava o QSO na hora. Mapeamento: `call`; `timestamp` (UTC "AAAA-MM-DD hh:mm:ss");
+    `rxfreq`/`txfreq` em **unidades de 10 Hz** (352519 = 3,52519 MHz); `band` em MHz com ponto ou vírgula
+    ("3.5"/"3,5", conforme o Windows); `mode`; `mycall` → estação; `operator` (vazio = estação); `snt`/`sntnr`
+    → RST/troca enviados; `rcv`/`rcvnr`/`exchange1`/`section`/`zone` → troca recebida; `gridsquare`, `name`,
+    `qth`, `power` (do contato), `comment`; `contestname` → CONTEST_ID; `points`; `radionr`; `IsRunQSO`;
+    `ID` (GUID de 32 hex) guardado no QSO para editar/apagar depois. `zone` e `section` não equivalem sempre a
+    CQZ/ITUZ/STATE (dependem do concurso): guardar como troca e só copiar para CQZ quando fizer sentido.
+    `IsOriginal=False` indica contato reencaminhado por outra estação da rede; `IsClaimedQso=0` = X-QSO.
+  - `<contactreplace>`: atualiza o QSO com o mesmo `ID` (usar `oldcall`/`oldtimestamp` se o ID não existir).
+    Ao editar, o N1MM envia `<contactdelete>` seguido de `<contactreplace>`: tratar o par sem perder o QSO.
+  - `<contactdelete>`: apaga pelo `ID` (ou por indicativo + hora + banda).
+  - `<AppInfo>`: concurso, banco e estação ativos (mostrar no painel).
+  - `<RadioInfo>` (a cada 10 s): `Freq`/`TXFreq` (10 Hz), `Mode`, `OpCall`, `RadioNr`, `IsRunning` — usar no
+    registro ao vivo; em SO2V/SO2R só confiar no TXFreq quando `RadioNr` = `ActiveRadioNr`.
+  - `<lookupinfo>` (opcional): o N1MM avisa o indicativo antes de registrar → abrir a ficha/consulta QRZ.
+  - `<dynamicresults>` (score): placar por banda/modo e total para o painel do concurso.
+  - Não duplicar quando o mesmo concurso for importado depois por ADIF/Cabrillo (mesma regra de dedupe).
+  - Os QSOs recebidos entram na sincronização automática com as plataformas (item 5 do logbook completo).
+  - Testes com pacotes XML de exemplo do manual (contactinfo, replace, delete, radioinfo, score), incluindo
+    vírgula decimal na banda e o par delete+replace na edição.
 - **Backlog (29/10/2026): recursos de logbook completo (referência: softwares de log consolidados do mercado).**
   Ordem sugerida de prioridade; cada item pode virar uma versão.
   **Decisão do mantenedor (29/10/2026):** na próxima versão implementar os itens **1, 5, 10, 12 e 13**.
