@@ -18,6 +18,29 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (29/10/2026): aproveitar o N1MM Logger+ além do UDP** (manual oficial: Features, Technical
+  Information, Call History, Statistics, External UDP Messages).
+  1. **Importar o banco do N1MM (.s3db, SQLite)** de `Documentos\N1MM Logger+\Databases`: listar os concursos
+     do banco e importar um, vários ou todos de uma vez, trazendo concurso, operador, rádio (`RadioNr`),
+     run/S&P, troca, pontos, multiplicadores e X-QSO. Somente leitura, a partir de uma cópia (o manual pede não
+     mexer no banco com o N1MM aberto). Sem duplicar com UDP/ADIF.
+  2. **Gerar arquivos para o N1MM a partir do log:** Call History (indicativo, nome, troca, quadrícula, por
+     concurso ou do log geral, no formato de texto do N1MM com as diretivas `!!Order!!`) e lista de indicativos
+     no formato Master.scp (Super Check Partial) com os indicativos já trabalhados.
+  3. **Análises de concurso mais ricas:** run × S&P (taxa, QSOs, multiplicadores), produção por rádio e por
+     posição/computador (SO2R, multi-op), linha do tempo dos multiplicadores, X-QSOs, placar ao vivo e
+     comparação com o mesmo concurso em anos anteriores.
+  4. **Consulta antecipada (LookupInfo):** ao digitar um indicativo no N1MM, abrir no QSL Manager a ficha da
+     estação (QRZ/HamQTH e histórico de contatos) antes de registrar.
+  5. **Exportação para o N1MM:** ADIF com os campos que o N1MM lê na importação (CONTEST_ID, SRX/STX,
+     APP_N1MM_*), para levar logs do QSL Manager de volta ao N1MM.
+  6. **Concursos definidos pelo usuário (UDC):** ler arquivos `.udc` do N1MM para obter nome, multiplicadores
+     e pontuação de concursos que o app não conhece, melhorando a análise de concurso.
+  7. **Mapa da linha cinzenta e rumo/nascer-pôr do sol** por indicativo (o N1MM tem janela Grayline e cálculo
+     de rumo): mostrar na ficha da estação e no registro ao vivo.
+  8. **Spots (`<spot>`)**: guardar os spots recebidos do N1MM com status (mult, new qso, dupe) — preparado para
+     o DX Cluster futuro; por ora só registro/estatística.
+  Ficam de fora (operação de concurso do próprio N1MM): CW/Winkeyer, DVK, rotor, bandmap e envio de mensagens.
 - **Backlog (29/10/2026): integração com o N1MM Logger+ (mensagens UDP externas).** Fonte: manual oficial,
   "External UDP Messages" (n1mmwp.hamdocs.com/appendices/external-udp-broadcasts/). No N1MM: Config → Config
   Ports → Broadcast Data, destino `127.0.0.1:12060` (ou o IP do PC do QSL Manager; vários destinos separados por
