@@ -89,6 +89,17 @@ Itens solicitados e situação na versão 0.1.0.
   primeiro e último contato, status de QSL por banda (trabalhado/confirmado), quadrículas e mapa.
 - **Correção visual (29/10/2026):** na matriz DXCC da aba QSL, os títulos das colunas não ficam alinhados
   com os valores (DXCC e Continente deslocados); alinhar cabeçalho e células.
+- **Backlog (29/10/2026): análise de propagação a partir dos contatos.** Nova página (Estatísticas →
+  Propagação) que usa os QSOs importados como evidência de abertura de propagação ao longo do tempo:
+  - matriz mês × país/entidade (e mês × continente) por banda, mostrando quando cada região "abriu";
+  - hora UTC × mês por banda e região (sazonalidade e janelas de abertura: greyline, abertura diurna/noturna);
+  - distâncias e azimutes por banda ao longo dos meses (alcance médio/máximo e direções predominantes);
+  - aberturas esporádicas em VHF/UHF (ex.: Es em 6 m e 2 m, tropo): QSOs longos fora do padrão da banda,
+    agrupados por data, com mapa;
+  - comparação entre anos (efeito do ciclo solar) e, opcionalmente, cruzamento com índices solares
+    históricos (SFI/SSN, Kp) quando disponíveis;
+  - tudo interativo (clique filtra, ficha da entidade) e exportável/relatório. Deixar claro que o resultado
+    reflete a atividade do próprio operador (não mede propagação absoluta).
 - **Ajuste de CI antes da próxima versão:** o job de release usa `gh release upload --clobber`; um push
   na `main` sem mudar a versão sobrescreveria os pacotes da release já publicada no site (SHA-256 diferente).
   Pular o upload quando a release da versão já existir.
