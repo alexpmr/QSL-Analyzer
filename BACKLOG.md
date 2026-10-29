@@ -18,6 +18,19 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (29/10/2026): renomear o programa para "PT2VHF QSL Manager".** Trocar o nome em toda a interface
+  (cabeçalho, título da janela, Sobre, ajuda, aviso do site, relatórios/PDF), nos atalhos e no instalador
+  (`productName`), no README/CHANGELOG e na página do site (título, menu de projetos, catálogo, textos em
+  7 idiomas, sitemap). Cuidados para não quebrar quem já usa:
+  - **dados:** manter o `appId`/pasta de dados atuais, ou migrar automaticamente a pasta antiga
+    (`PT2VHF QSL Analyzer`) para a nova na primeira abertura, sem perder banco, preferências e credenciais;
+  - **OTA:** a 0.3.0 instalada só aceita pacotes chamados `PT2VHF-QSL-Analyzer-*.exe`; manter esse nome de
+    arquivo pelo menos na primeira versão renomeada (ou publicar uma versão de transição que aceite os dois
+    nomes) para a atualização automática continuar funcionando;
+  - **site e contadores:** manter o produto `qsl` no `updates.json`/`update.php`/`download.php` e a URL `/qsl`
+    (ou redirecionar a nova URL para ela), preservando o histórico dos contadores de download;
+  - instalação nova substitui a antiga (sem dois atalhos/programas instalados lado a lado);
+  - registrar a troca de nome no CHANGELOG da versão.
 - **Backlog (29/10/2026): LoTW falha com "INVALID_RESPONSE" também com "Desde" vazio.** Depois de algumas
   tentativas, a mesma conta (que antes trouxe 7 QSOs sem data) passou a falhar sempre, com ou sem data, com
   "Sincronizar ao abrir o app" ligado. Hipótese principal: limite de requisições do LoTW (página "Page Request
