@@ -38,6 +38,13 @@ Itens solicitados e situação na versão 0.1.0.
   ignorados. Durante a importação abre um popup com a barra de progresso e as contagens, atualizadas em
   tempo real, de contatos importados e de contatos ignorados por já existirem (e o total processado), com
   o resumo final ao terminar.
+- **Backlog (29/10/2026): aviso do site oficial igual ao do Mesh Analyzer.** Trocar o diálogo exibido a
+  cada abertura pelo mesmo modelo do PT2VHF Mesh Analyzer: título "Downloads no site oficial"; texto
+  "A partir de agora, as novas versões e os instaladores do PT2VHF QSL Analyzer serão distribuídos pelo
+  site oficial."; link sublinhado "www.PT2VHF.com" (abre o site); um único botão "Entendi" alinhado à
+  direita (com foco). Mesmo visual: cartão escuro com cantos arredondados e borda clara, título em
+  negrito, sem os botões "Abrir o site"/"Continuar" atuais. Traduzir para inglês e espanhol. O aviso de
+  versão nova continua aparecendo logo depois de fechar este.
 - **Ajuste de CI antes da próxima versão:** o job de release usa `gh release upload --clobber`; um push
   na `main` sem mudar a versão sobrescreveria os pacotes da release já publicada no site (SHA-256 diferente).
   Pular o upload quando a release da versão já existir.
