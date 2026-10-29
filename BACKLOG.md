@@ -76,6 +76,12 @@ Itens solicitados e situação na versão 0.1.0.
   14. **Sincronização automática:** buscar novidades do QRZ/LoTW ao abrir o app, em segundo plano.
   15. **Painéis salvos:** guardar combinações de filtros com nome (ex.: "2 m FM em 2024").
   16. **Relatório anual pronto:** modelo de PDF "Meu ano no rádio" para compartilhar.
+- **Backlog (29/10/2026): unir "Enviar logs" e "Importar logs" num único "Importar logs".** Acabar com a
+  fila intermediária herdada do QScope (que existe lá porque o arquivo sobe para um servidor): o usuário
+  escolhe, arrasta ou cola os arquivos e a importação começa na hora, com o popup de progresso (importados,
+  ignorados por já existirem, total) e o resumo final. Sem escolha de container (ver item de omitir
+  containers); indicativo da estação padrão só quando o log não trouxer STATION_CALLSIGN. Renumerar o
+  submenu Logs e atualizar ajuda e README.
 - **Ajuste de CI antes da próxima versão:** o job de release usa `gh release upload --clobber`; um push
   na `main` sem mudar a versão sobrescreveria os pacotes da release já publicada no site (SHA-256 diferente).
   Pular o upload quando a release da versão já existir.
