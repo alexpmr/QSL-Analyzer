@@ -24,6 +24,14 @@ Itens solicitados e situação na versão 0.1.0.
   contatos: todos os QSOs (data/hora, banda, modo, RST, frequência, container, estação/operador),
   bandas e modos trabalhados, slots, primeiro e último contato, país/DXCC, zonas, quadrícula, distância
   e azimute, e status de QSL (papel, LoTW, eQSL) de cada QSO.
+- **Backlog (29/10/2026): omitir containers e organizar só por estação.** Os containers não devem
+  aparecer para o usuário: todos os ADIFs enviados, de qualquer estação, ficam num único container
+  interno, e a organização visível é apenas por estação (indicativo/STATION_CALLSIGN). Ajustar: menu Logs
+  (sem "Gerenciar containers" e sem escolha de container na importação, em Copiar/filtrar, Modificar e
+  plataformas), barra de filtros (sem o filtro Container), dashboard, banco de dados (limpeza só por
+  indicativo, sem "Restringir ao container"), Comparar (só estações), busca e textos de ajuda/README.
+  A importação incremental continua sem duplicar QSOs (mesma estação, indicativo, banda, modo e minuto).
+  Bancos já existentes com mais de um container devem ser unidos no container único, sem duplicar QSOs.
 - **Ajuste de CI antes da próxima versão:** o job de release usa `gh release upload --clobber`; um push
   na `main` sem mudar a versão sobrescreveria os pacotes da release já publicada no site (SHA-256 diferente).
   Pular o upload quando a release da versão já existir.
