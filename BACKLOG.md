@@ -45,6 +45,36 @@ Itens solicitados e situação na versão 0.1.0.
   direita (com foco). Mesmo visual: cartão escuro com cantos arredondados e borda clara, título em
   negrito, sem os botões "Abrir o site"/"Continuar" atuais. Traduzir para inglês e espanhol. O aviso de
   versão nova continua aparecendo logo depois de fechar este.
+- **Backlog (29/10/2026): melhorias de análise dos contatos.** Aprovadas pelo mantenedor; prioridade
+  sugerida nesta ordem: progresso de diplomas com "faltam confirmar", resumo em linguagem natural e
+  saúde do log.
+  1. **Progresso de diplomas:** DXCC (Mixed, Phone, CW, Digital e por banda), WAS, WAZ, WPX, VUCC
+     (quadrículas VHF/UHF) e IOTA, com trabalhado, confirmado e o que falta (lista do que falta).
+  2. **"Faltam confirmar":** entidades trabalhadas e não confirmadas, com o melhor QSO de cada uma para
+     pedir QSL.
+  3. **Entidades raras:** destacar as entidades mais procuradas (Most Wanted do Club Log) já trabalhadas.
+  4. **"Sua atividade" em linguagem natural no Dashboard:** resumo automático (totais do período, modo
+     predominante, melhor mês, contato mais distante, quantas entidades faltam para o DXCC).
+  5. **Comparativo de períodos:** este ano × ano passado, este mês × média; o que cresceu, caiu e o que é
+     novo.
+  6. **Melhor horário por banda e região:** hora UTC × continente para cada banda, a partir dos próprios
+     QSOs.
+  7. **Alcance por banda ao longo do tempo:** distância e direção dos contatos por banda, mês a mês
+     (efeito do ciclo solar).
+  8. **Ficha do indicativo ampliada** (complementa o item do indicativo clicável): histórico com a
+     estação, datas e quantidade de contatos.
+  9. **Amigos frequentes e "sumidos":** estações mais contatadas e as que não aparecem há muito tempo.
+  10. **Novos indicativos por período:** indicativos inéditos por mês.
+  11. **Saúde do log:** QSOs sem quadrícula, banda incompatível com a frequência, modo inválido,
+      possíveis duplicados com poucos minutos de diferença e indicativos possivelmente mal digitados
+      (ex.: PT2VHF × PT2VFH), com correção em lote.
+  12. **Conferência entre plataformas:** cruzar o log local com LoTW, QRZ e eQSL e listar o que está só
+      de um lado, para reenviar.
+  13. **Análise de concurso:** detectar o período pelo CONTEST_ID, pontuação estimada, multiplicadores,
+      taxa por hora e comparação com o mesmo concurso do ano anterior.
+  14. **Sincronização automática:** buscar novidades do QRZ/LoTW ao abrir o app, em segundo plano.
+  15. **Painéis salvos:** guardar combinações de filtros com nome (ex.: "2 m FM em 2024").
+  16. **Relatório anual pronto:** modelo de PDF "Meu ano no rádio" para compartilhar.
 - **Ajuste de CI antes da próxima versão:** o job de release usa `gh release upload --clobber`; um push
   na `main` sem mudar a versão sobrescreveria os pacotes da release já publicada no site (SHA-256 diferente).
   Pular o upload quando a release da versão já existir.
