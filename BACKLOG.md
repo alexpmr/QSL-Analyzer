@@ -18,6 +18,13 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Correção prioritária (29/10/2026): contatos "sumiram" ao atualizar da 0.3.0 para a 0.4.0.** Relato do
+  mantenedor: após atualizar, o app abriu sem os logs importados. Causa provável: a troca do nome
+  (`productName`) mudou a pasta de dados de `%APPDATA%\PT2VHF QSL Analyzer` para `...\PT2VHF QSL Manager` e a
+  cópia automática na primeira abertura não aconteceu. Corrigir: procurar o banco na pasta antiga sempre que o
+  banco atual estiver vazio (inclusive se já houver um banco novo vazio criado), copiar banco, `.bak`, CTY.DAT e
+  backups, avisar o usuário e registrar no histórico; nunca sobrescrever um banco com contatos. Testar a
+  atualização real 0.3.0 → nova versão no Windows (instalado e portátil) antes de publicar.
 - **Backlog (29/10/2026): pacotes com o nome novo na próxima versão.** Gerar os binários como
   `PT2VHF-QSL-Manager-<versão>-win-x64-setup.exe` / `-portable.exe` (e Linux/macOS quando voltarem): ajustar
   `artifactName` no `package.json`, os nomes esperados pelo workflow de release e, no site, o
