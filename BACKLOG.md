@@ -18,6 +18,12 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): aproveitar ao máximo a consulta do QRZ.com mesmo sem assinatura.** Trazer tudo o
+  que a API XML devolver para contas gratuitas (nome, endereço, cidade, estado, país, Grid, foto do perfil
+  quando vier), mostrar a bandeira do país (pelo DXCC/CTY) e usar esses dados no resumo da ficha do indicativo.
+  Verificar na documentação/resposta real quais campos vêm sem assinatura e completar o que faltar com HamQTH
+  e os próprios contatos.
+
 - **Backlog (30/10/2026): tabela "Todos os QSOs" da ficha do indicativo.** Tirar a coluna Estação e incluir a
   coluna Nome. Acima da tabela, um resumo com os dados comuns aos contatos desse indicativo (os valores mais
   recentes ou mais frequentes nos QSOs: nome, endereço/QTH, Grid, país, estado, município, e-mail etc.).
