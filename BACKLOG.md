@@ -18,6 +18,10 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): mover "Plataformas (QRZ, LoTW, eQSL, Club Log)" do menu Logs para Configurações.**
+  A página inteira (credenciais, baixar, enviar, sincronizar, envio automático) passa a ficar em Configurações;
+  links internos que levam a ela (ex.: ficha do indicativo, avisos) apontam para o novo lugar.
+
 - **Backlog (30/10/2026): aproveitar ao máximo a consulta do QRZ.com mesmo sem assinatura.** Trazer tudo o
   que a API XML devolver para contas gratuitas (nome, endereço, cidade, estado, país, Grid, foto do perfil
   quando vier), mostrar a bandeira do país (pelo DXCC/CTY) e usar esses dados no resumo da ficha do indicativo.
