@@ -18,6 +18,10 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): tabela "Todos os QSOs" da ficha do indicativo.** Tirar a coluna Estação e incluir a
+  coluna Nome. Acima da tabela, um resumo com os dados comuns aos contatos desse indicativo (os valores mais
+  recentes ou mais frequentes nos QSOs: nome, endereço/QTH, Grid, país, estado, município, e-mail etc.).
+
 - **Backlog (30/10/2026): tirar da ficha do indicativo o quadro de erro da consulta.** Quando a consulta
   QRZ.com/HamQTH falha (ex.: "Username/password incorrect - blocked until ..."), não mostrar o quadro grande
   com a mensagem e os botões "Atualizar dados"/"Ver no QRZ.com"; a ficha começa direto nos números. O erro de
