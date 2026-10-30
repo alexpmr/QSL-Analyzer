@@ -18,6 +18,13 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): juntar Importar e Exportar numa mesma aba** do menu Logs (hoje são páginas
+  separadas: `import` e `exportlogs`), com sub-abas ou seções Importar / Exportar.
+- **Backlog (30/10/2026): campo Indicativo primeiro no filtro comum.** Na barra de filtros, mover
+  "Indicativo (* ?)" para a primeira posição, antes de Estação.
+- **Backlog (30/10/2026): trocar "quadrícula" por "Grid" em todo o sistema** (rótulos, ajuda, relatórios,
+  fichas, mensagens; textos em pt-BR e es; no site também, se aparecer).
+
 - **Backlog (30/10/2026): envio automático de cada contato novo, por plataforma.** Em cada plataforma
   (QRZ.com, eQSL, Club Log, LoTW via TQSL; HRDLog.net quando existir) uma opção "Enviar automaticamente os
   contatos incluídos no QSL Manager". Ao salvar um contato novo (ou editado), enviar em segundo plano às
