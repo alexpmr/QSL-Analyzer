@@ -18,6 +18,12 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): envio automático de cada contato novo, por plataforma.** Em cada plataforma
+  (QRZ.com, eQSL, Club Log, LoTW via TQSL; HRDLog.net quando existir) uma opção "Enviar automaticamente os
+  contatos incluídos no QSL Manager". Ao salvar um contato novo (ou editado), enviar em segundo plano às
+  plataformas marcadas, marcar como enviado e, se falhar (sem internet etc.), deixar na fila para a próxima
+  tentativa, com aviso discreto. Detalha o item 5 da lista de logbook.
+
 - **Backlog (30/10/2026): importação do LoTW muito lenta (avança um a um).** Relato com print: "Importando de
   ARRL LoTW", 78 / 25.940 processados após um bom tempo (1 adicionado, 77 já existiam). Investigar o gargalo
   (o laço de `importFiles` usa lotes de 300, então algo por registro está lento: busca de duplicados/mesclagem de
