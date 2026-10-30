@@ -18,6 +18,9 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): novo contato pré-preenchido com frequência e modo do último incluído.** Ao abrir
+  "Novo contato", trazer frequência, banda e modo (e submodo) do último contato inserido manualmente.
+
 - **[Feito, sai na próxima versão] (30/10/2026): campos do formulário de contato com largura pelo tamanho usual nos ADIFs** (indicativo, RST e banda curtos; nome e QTH largos).
 
 - **Backlog (30/10/2026): banda automática pela frequência.** No formulário de contato, ao informar a
