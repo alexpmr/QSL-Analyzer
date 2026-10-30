@@ -18,6 +18,13 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): backup com vários botões "OneDrive" repetidos.** A detecção das pastas de nuvem
+  (`cloud-folders` em `desktop/main.cjs`) lista a mesma pasta várias vezes (variáveis `OneDrive`,
+  `OneDriveConsumer` e `~/OneDrive` apontando para o mesmo lugar, com diferença de maiúsculas/barra) ou contas
+  diferentes com o mesmo rótulo. Corrigir: comparar caminhos normalizados (realpath, sem diferenciar
+  maiúsculas no Windows) e, quando houver mais de uma conta, rotular pelo nome da pasta (ex.: "OneDrive -
+  Pessoal", "OneDrive - Empresa"), com o caminho completo na dica; destacar o botão da pasta já escolhida.
+
 - **Backlog (30/10/2026): ajustes no formulário de novo contato e coordenadas da estação.**
   - Frequência antes da Banda no formulário.
   - Não herdou frequência, banda e modo do último contato registrado: investigar `db.prefs.lastManual` (só é
