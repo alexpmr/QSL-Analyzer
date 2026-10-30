@@ -18,6 +18,12 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): tirar da ficha do indicativo o quadro de erro da consulta.** Quando a consulta
+  QRZ.com/HamQTH falha (ex.: "Username/password incorrect - blocked until ..."), não mostrar o quadro grande
+  com a mensagem e os botões "Atualizar dados"/"Ver no QRZ.com"; a ficha começa direto nos números. O erro de
+  credencial fica só como aviso em Configurações/Preferências e, enquanto o QRZ estiver bloqueado, não
+  consultar de novo até o horário informado.
+
 - **Backlog (30/10/2026): juntar Importar e Exportar numa mesma aba** do menu Logs (hoje são páginas
   separadas: `import` e `exportlogs`), com sub-abas ou seções Importar / Exportar.
 - **Backlog (30/10/2026): campo Indicativo primeiro no filtro comum.** Na barra de filtros, mover
