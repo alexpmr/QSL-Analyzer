@@ -18,6 +18,8 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **[Feito, sai na próxima versão] (30/10/2026): campos do formulário de contato com largura pelo tamanho usual nos ADIFs** (indicativo, RST e banda curtos; nome e QTH largos).
+
 - **Backlog (30/10/2026): banda automática pela frequência.** No formulário de contato, ao informar a
   frequência, preencher/ajustar a banda automaticamente (usar `bandFromFreq`).
 

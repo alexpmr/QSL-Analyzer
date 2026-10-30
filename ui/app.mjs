@@ -360,11 +360,13 @@ function openQsoForm(id = null, presetCall = '') {
     rstS: q?.rstS || '', rstR: q?.rstR || '', station: q?.station || (db.prefs.myCall || '').toUpperCase(), operator: q?.operator || '', myGrid: q?.myGrid || db.prefs.myGrid || '', grid: q?.grid || '',
     name: q?.name || '', qth: q?.qth || '', comment: q?.comment || '', contest: q?.contest || '', stx: q?.stx || '', srx: q?.srx || '',
   };
-  const input = (k, type = 'text', extra = '') => `<label><span>${esc(t('qf_' + k))}</span><input name="${k}" type="${type}" value="${esc(v[k])}" ${extra}></label>`;
+  // Larguras (em caracteres) pelo tamanho usual de cada campo nos ADIFs.
+  const QF_WIDTH = { call: 12, date: 16, time: 10, band: 8, freq: 11, mode: 9, submode: 9, rstS: 6, rstR: 6, station: 12, operator: 12, myGrid: 10, grid: 10, name: 30, qth: 38, contest: 16, stx: 8, srx: 8 };
+  const input = (k, type = 'text', extra = '') => `<label style="--w:${QF_WIDTH[k] || 16}ch"><span>${esc(t('qf_' + k))}</span><input name="${k}" type="${type}" value="${esc(v[k])}" ${extra}></label>`;
   const flag = ([k]) => `<label class="check"><input type="checkbox" name="${k}"${q?.[k] === 'Y' ? ' checked' : ''}> ${esc(t('qf_' + k))}</label>`;
   const extra = Object.entries(q?.extra || {}).map(([k, val]) => `${k}=${val}`).join('\n');
   $('#qsoBody').innerHTML = `<form id="qsoForm" data-id="${id || ''}"><div class="dialogHead"><h2>${esc(t(q ? 'editContact' : 'newContact'))}</h2></div>
-    <div class="fields">${input('call', 'text', 'required maxlength="20" autofocus')}${input('date', 'date', 'required')}${input('time', 'time', 'required')}${input('band', 'text', 'list="bandList" maxlength="8"')}${input('freq', 'text', 'inputmode="decimal" placeholder="14.074"')}${input('mode', 'text', 'required list="modeList" maxlength="12"')}${input('submode')}${input('rstS')}${input('rstR')}${input('station', 'text', 'required maxlength="20"')}${input('operator')}${input('myGrid')}${input('grid')}${input('name')}${input('qth')}${input('contest')}${input('stx')}${input('srx')}</div>
+    <div class="fields qsoFields">${input('call', 'text', 'required maxlength="20" autofocus')}${input('date', 'date', 'required')}${input('time', 'time', 'required')}${input('band', 'text', 'list="bandList" maxlength="8"')}${input('freq', 'text', 'inputmode="decimal" placeholder="14.074"')}${input('mode', 'text', 'required list="modeList" maxlength="12"')}${input('submode')}${input('rstS')}${input('rstR')}${input('station', 'text', 'required maxlength="20"')}${input('operator')}${input('myGrid')}${input('grid')}${input('name')}${input('qth')}${input('contest')}${input('stx')}${input('srx')}</div>
     <div id="workedBefore" class="workedBefore"></div>
     <label><span>${esc(t('qf_comment'))}</span><input name="comment" value="${esc(v.comment)}"></label>
     <h3>QSL</h3><div class="qslFlags">${QSL_FLAGS.map(flag).join('')}</div>

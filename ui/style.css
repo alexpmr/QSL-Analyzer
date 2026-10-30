@@ -344,3 +344,6 @@ dialog.qsoDialog>div>form>label{display:flex;flex-direction:column;gap:5px;margi
 .stationSelect option{background:var(--panel);color:var(--text)}
 .workedBefore{min-height:22px;margin:8px 0;font-size:13px;color:var(--muted)}
 .workedBefore .badge.new{color:#0b1523;background:var(--accent)}
+.fields.qsoFields{display:flex;flex-wrap:wrap;gap:10px 12px}
+.qsoFields label{flex:0 1 calc(var(--w) + 26px);min-width:0}
+.qsoFields input{width:100%;box-sizing:border-box}
