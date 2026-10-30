@@ -101,7 +101,7 @@ Itens solicitados e situação na versão 0.1.0.
       escolher uma pasta sincronizada).
   13. **Banco SQLite:** trocar o arquivo JSON por SQLite (gravação só do que mudou, logs com milhões de QSOs).
 
-  Situação na 0.5.0: itens 1 (parcial: indicador "já trabalhado" no formulário de contato; consulta QRZ/HamQTH já existe na ficha do indicativo) e 12 (atalhos de pasta OneDrive/Dropbox/Google Drive/iCloud para o backup automático) feitos. Pendentes: janela de entrada ao vivo com consulta automática, itens 5, 10 e 13, e N1MM.
+  Situação na 0.5.0: itens 1 (parcial: indicador "já trabalhado" no formulário de contato; consulta QRZ/HamQTH já existe na ficha do indicativo) e 12 (atalhos de pasta OneDrive/Dropbox/Google Drive/iCloud para o backup automático) feitos. Na 0.6.0 o item 5 foi feito (envio automático por plataforma; HRDLog.net ainda não). Pendentes: janela de entrada ao vivo com consulta automática, HRDLog.net, itens 10 e 13, e N1MM.
 
 ## Resolvidos na 0.6.0 (30/10/2026)
 
