@@ -18,6 +18,11 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): Dashboard mais compacto, com o mínimo de rolagem vertical.** Reduzir altura dos
+  blocos (tiles menores, fonte e espaçamentos menores) e dos gráficos, organizar em grade de 2–3 colunas
+  aproveitando a largura da tela, encurtar tabelas (top N menor, com "ver mais") e mapa mais baixo. Meta:
+  em 1366×768 / 1920×1080 ver o essencial do dashboard com pouca ou nenhuma rolagem. Conferir com prints.
+
 - **Backlog (30/10/2026): "Fazer backup agora" sem perguntar onde salvar e com progresso.** Hoje o botão abre
   a janela "Salvar como" mesmo com a pasta de backups já escolhida. Gravar direto na pasta configurada (ou na
   padrão), com nome datado, e mostrar popup de progresso (preparando, compactando, gravando) e, ao final, o
