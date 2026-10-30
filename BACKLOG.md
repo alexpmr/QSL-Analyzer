@@ -18,11 +18,12 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
-- **Backlog (30/10/2026): OTA não reabre o app.** Ao atualizar pelo aviso de versão nova, o app antigo fecha e
-  a versão nova não abre em seguida. Investigar o `apply-update.ps1`/handoff (instalador NSIS silencioso e
-  portátil): esperar o fim do instalador, localizar o executável instalado (nome/pasta após a troca para
-  "PT2VHF QSL Manager") e relançar; registrar log do handoff na pasta `updates` para diagnóstico; se não
-  conseguir relançar, avisar o usuário. Testar 0.5.0 → 0.6.0 → próxima.
+- **Backlog (30/10/2026): OTA não instala nem reabre o app.** Retificação do mantenedor: o app baixa a
+  atualização e fecha, mas a versão nova não é instalada e nada abre (nem a nova nem a antiga). Investigar o
+  handoff (`updater.launchHandoff` → `apply-update.ps1`): se o PowerShell chega a rodar (política de execução,
+  caminho com espaços/acentos, antivírus/SmartScreen bloqueando o .exe baixado), se o instalador NSIS silencioso
+  roda e com qual código de saída, e o relançamento. Gravar log do handoff em `updates\update-log.txt`; se a
+  instalação falhar, reabrir a versão antiga e mostrar o erro; testar instalador e portátil (0.5.0 → 0.6.0 → próxima).
 
 - **Backlog (29/10/2026): aproveitar o N1MM Logger+ além do UDP** (manual oficial: Features, Technical
   Information, Call History, Statistics, External UDP Messages).
