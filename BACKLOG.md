@@ -18,6 +18,17 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): ajustes no formulário de novo contato e coordenadas da estação.**
+  - Frequência antes da Banda no formulário.
+  - Não herdou frequência, banda e modo do último contato registrado: investigar `db.prefs.lastManual` (só é
+    gravado ao salvar um contato novo pelo formulário na 0.6.0; conferir se é salvo/persistido e, se não houver,
+    usar o último contato incluído no banco).
+  - Tirar o campo "Meu Grid" do formulário; o Grid da estação vem pré-preenchido das Configurações (gravado no
+    contato como MY_GRIDSQUARE, sem campo visível).
+  - Em Configurações, bloco "Coordenadas da estação" no padrão do PT2VHF Sat Tool (latitude/longitude, Grid
+    calculado e vice-versa, altitude, botão de localização/mapa se houver lá); usar como origem de distâncias,
+    azimutes e mapas.
+
 - **Backlog (30/10/2026): OTA não instala nem reabre o app.** Retificação do mantenedor: o app baixa a
   atualização e fecha, mas a versão nova não é instalada e nada abre (nem a nova nem a antiga). Investigar o
   handoff (`updater.launchHandoff` → `apply-update.ps1`): se o PowerShell chega a rodar (política de execução,
