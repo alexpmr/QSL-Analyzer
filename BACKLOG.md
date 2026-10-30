@@ -18,6 +18,10 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): botão "Salvar e novo" no formulário de contato.** Ao lado de "Salvar", grava o
+  contato e reabre o formulário limpo (com data/hora atuais e, junto do item de pré-preenchimento, frequência e
+  modo do último), com foco no indicativo; atalho de teclado sugerido: Ctrl+Enter.
+
 - **Backlog (30/10/2026): novo contato pré-preenchido com frequência e modo do último incluído.** Ao abrir
   "Novo contato", trazer frequência, banda e modo (e submodo) do último contato inserido manualmente.
 
