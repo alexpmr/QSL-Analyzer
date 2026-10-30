@@ -18,6 +18,12 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): importação do LoTW muito lenta (avança um a um).** Relato com print: "Importando de
+  ARRL LoTW", 78 / 25.940 processados após um bom tempo (1 adicionado, 77 já existiam). Investigar o gargalo
+  (o laço de `importFiles` usa lotes de 300, então algo por registro está lento: busca de duplicados/mesclagem de
+  QSL no importador, `enrich`/CTY ou atualização da tela) e processar em lotes rápidos, com índice por chave e
+  atualização do progresso por tempo, não por registro. Meta: 25 mil contatos em poucos segundos.
+
 - **Backlog (30/10/2026): botão "Salvar e novo" no formulário de contato.** Ao lado de "Salvar", grava o
   contato e reabre o formulário limpo (com data/hora atuais e, junto do item de pré-preenchimento, frequência e
   modo do último), com foco no indicativo; atalho de teclado sugerido: Ctrl+Enter.
