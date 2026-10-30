@@ -18,6 +18,11 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): botão "Testar conexão" com LED vermelho/verde em cada plataforma.** Faz uma
+  consulta leve (QRZ: STATUS do logbook; LoTW: consulta mínima; eQSL e Club Log: validação das credenciais)
+  e acende LED verde (OK) ou vermelho (falha, com o motivo: credencial inválida, bloqueio, sem internet,
+  limite de consultas). O LED fica visível no cartão da plataforma e lembra o último resultado.
+
 - **Backlog (30/10/2026): mover "Plataformas (QRZ, LoTW, eQSL, Club Log)" do menu Logs para Configurações.**
   A página inteira (credenciais, baixar, enviar, sincronizar, envio automático) passa a ficar em Configurações;
   links internos que levam a ela (ex.: ficha do indicativo, avisos) apontam para o novo lugar.
