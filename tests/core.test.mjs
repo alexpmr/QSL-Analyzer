@@ -139,3 +139,14 @@ test('platform uploads: QRZ insert, eQSL batch, Club Log file and sent markers',
   assert.equal(P.parseResponse('lotw','<html><h1>Page Request Limit!</h1></html>').error,'RATE_LIMIT');
   assert.match(P.parseResponse('lotw','<html><body>Server error 500</body></html>').detail,/Server error 500/);
 });
+
+test('download de plataforma marca contatos existentes como já enviados', async () => {
+  const DB = await import('../src/db.mjs');
+  const db = DB.emptyDb ? DB.emptyDb() : DB.createDb();
+  const base = { station: 'PT2VHF', call: 'PY4BH', band: '40m', mode: 'SSB', ts: Date.UTC(2024, 8, 1, 0, 57) };
+  DB.importQsos(db, [{ ...base }]);
+  const res = DB.importQsos(db, [{ ...base, lotwSent: 'Y', extra: { QRZCOM_QSO_UPLOAD_STATUS: 'Y' } }]);
+  assert.equal(res.skipped, 1);
+  assert.equal(db.qsos[0].lotwSent, 'Y');
+  assert.equal(db.qsos[0].extra.QRZCOM_QSO_UPLOAD_STATUS, 'Y');
+});

@@ -26,10 +26,8 @@ export function entityMatcher(type, value) {
 const qslMarks = q => [q.qslRcvd === 'Y' ? 'P' : '', q.lotwRcvd === 'Y' ? 'L' : '', q.eqslRcvd === 'Y' ? 'E' : ''].join('');
 
 function lookupCard(t, data, meta) {
-  if (!data) {
-    return `<div class="lookupCard empty"><p>${esc(meta.error ? t('lookupError', { e: meta.error }) : meta.configured ? t('lookupNotFound') : t('lookupNotConfigured'))}</p>
-      <div class="lookupActions">${meta.configured ? `<button data-lookup-refresh="${esc(meta.call)}">${esc(t('lookupRefresh'))}</button>` : `<button data-go="settings:preferences">${esc(t('page_preferences'))}</button>`}<button data-link="https://www.qrz.com/db/${esc(encodeURIComponent(meta.call))}">${esc(t('openQrz'))}</button></div></div>`;
-  }
+  // Sem dados (falha ou consulta não configurada): a ficha começa direto nos números.
+  if (!data) return '';
   const row = (label, value) => (value || value === 0 ? `<div><small>${esc(label)}</small><span>${esc(value)}</span></div>` : '');
   const badges = [data.lotw ? 'LoTW' : '', data.eqsl ? 'eQSL' : '', data.paper ? t('paperQsl') : ''].filter(Boolean).map(b => `<span class="badge">${esc(b)}</span>`).join('');
   return `<div class="lookupCard">${data.imageData ? `<img src="${esc(data.imageData)}" alt="${esc(data.call)}">` : ''}
@@ -41,11 +39,22 @@ function lookupCard(t, data, meta) {
       <div class="lookupActions"><button data-lookup-refresh="${esc(data.call)}">${esc(t('lookupRefresh'))}</button><button data-link="${esc(data.page)}">${esc(data.source === 'QRZ.com' ? t('openQrz') : t('openHamqth'))}</button>${data.web ? `<button data-link="${esc(data.web)}">${esc(t('website'))}</button>` : ''}</div></div></div>`;
 }
 
-export function renderEntity({ t, qsos, type, value, home = null, lookup = null }) {
+// Dados comuns aos contatos de um indicativo: o valor mais recente de cada campo nos QSOs, completado pela consulta.
+function commonInfo(t, list, data) {
+  const latest = f => { for (let i = list.length - 1; i >= 0; i--) { const v = typeof f === 'function' ? f(list[i]) : list[i][f]; if (v) return v; } return ''; };
+  const items = [
+    [t('name'), latest('name') || data?.name], [t('qth'), latest('qth') || data?.qth], [t('address'), data?.addr || latest(q => q.extra?.ADDRESS)],
+    [t('stateProv'), latest('state') || data?.state], [t('locator'), latest(q => q.grid) || data?.grid], [t('country'), latest('country') || data?.country],
+    ['CQ / ITU', [latest('cqz') || data?.cqz, latest('ituz') || data?.ituz].filter(Boolean).join(' / ')], ['E-mail', latest(q => q.extra?.EMAIL) || data?.email],
+  ].filter(([, v]) => v || v === 0);
+  return items.length ? `<div class="commonInfo">${items.map(([k, v]) => `<div><small>${esc(k)}</small><span>${esc(v)}</span></div>`).join('')}</div>` : '';
+}
+
+export function renderEntity({ t, qsos, type, value, home = null, lookup = null, flag = '' }) {
   const list = S.byTime(qsos.filter(entityMatcher(type, value)));
   const title = type === 'grid' ? value.toUpperCase().slice(0, 4) : value;
   const typeLabel = t('entity_' + type);
-  let html = `<div class="entityHead"><div><small>${esc(typeLabel)}</small><h2>${esc(title)}</h2></div><div class="entityActions">${ENTITY_FILTER[type] ? `<button data-entity-filter="${esc(type + ':' + value)}">${esc(t('filterByEntity'))}</button>` : ''}${type === 'call' ? `<button data-qso-new-call="${esc(value)}">＋ ${esc(t('newContact'))}</button>` : ''}<button data-entity-close>${esc(t('close'))}</button></div></div>`;
+  let html = `<div class="entityHead"><div><small>${esc(typeLabel)}</small><h2>${flag ? `<img class="flag" src="${esc(flag)}" alt="">` : ''}${esc(title)}</h2></div><div class="entityActions">${ENTITY_FILTER[type] ? `<button data-entity-filter="${esc(type + ':' + value)}">${esc(t('filterByEntity'))}</button>` : ''}${type === 'call' ? `<button data-qso-new-call="${esc(value)}">＋ ${esc(t('newContact'))}</button>` : ''}<button data-entity-close>${esc(t('close'))}</button></div></div>`;
   if (type === 'call') html += lookupCard(t, lookup?.data || null, { call: value, ...(lookup?.meta || {}) });
   if (!list.length) return html + `<p class="notice">${esc(t('entityNoQsos'))}</p>`;
   const bands = sortBands([...S.distinct(list, q => q.band)]), modes = [...S.distinct(list, q => q.mode)].sort();
@@ -78,8 +87,8 @@ export function renderEntity({ t, qsos, type, value, home = null, lookup = null 
     p.value++; p.label = `${q.call} · ${S.grid4(q) || q.country}: ${p.value}`; pts.set(k, p);
   }
   if (pts.size) html += worldMap([...pts.values()], { title: t('entityMap'), home, lines: type === 'call' });
-  const rows = [...list].reverse().map(q => [fmtDateTime(q.ts), q.call, q.band, q.mode, q.freq ? q.freq.toFixed(3) : '', q.rstS, q.rstR, q.station, q.operator, S.grid4(q), q.country, qslMarks(q), { html: `<button class="iconBtn" data-qso-edit="${q.id}" title="${esc(t('edit'))}">✎</button><button class="iconBtn danger" data-qso-delete="${q.id}" title="${esc(t('delete'))}">✕</button>` }]);
-  html += `<h3>${esc(t('allQsos', { n: list.length }))}</h3>` + table([t('date'), t('call'), t('band'), t('mode'), 'MHz', 'S', 'R', t('station'), t('operator'), t('locator'), t('country'), 'QSL', ''], rows, { links: { 1: 'call', 7: 'station', 9: 'grid', 10: 'country' }, max: 3000 });
+  const rows = [...list].reverse().map(q => [fmtDateTime(q.ts), q.call, q.band, q.mode, q.freq ? q.freq.toFixed(3) : '', q.rstS, q.rstR, q.name || '', q.operator, S.grid4(q), q.country, qslMarks(q), { html: `<button class="iconBtn" data-qso-edit="${q.id}" title="${esc(t('edit'))}">✎</button><button class="iconBtn danger" data-qso-delete="${q.id}" title="${esc(t('delete'))}">✕</button>` }]);
+  html += `<h3>${esc(t('allQsos', { n: list.length }))}</h3>` + (type === 'call' ? commonInfo(t, list, lookup?.data) : '') + table([t('date'), t('call'), t('band'), t('mode'), 'MHz', 'S', 'R', t('name'), t('operator'), t('locator'), t('country'), 'QSL', ''], rows, { links: { 1: 'call', 9: 'grid', 10: 'country' }, max: 3000 });
   html += `<p class="help">${esc(t('qslMarksLegend'))}</p>`;
   return html;
 }

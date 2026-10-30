@@ -1,5 +1,15 @@
 # Notas de versão
 
+## 0.6.0 - 2026-10-30
+
+- Envio às plataformas muito mais rápido: contatos baixados de QRZ.com, LoTW, eQSL e Club Log que já existiam no banco passam a ficar marcados como "já enviados" (antes o app tentava reenviar tudo, um a um); o envio ao QRZ.com agora é feito em paralelo.
+- Envio automático: em cada plataforma, opção para enviar sozinho cada contato incluído no QSL Manager; se falhar, o contato fica na fila e é reenviado na próxima abertura.
+- Botão "Testar conexão" em cada plataforma, com LED verde/vermelho e o motivo da falha.
+- Plataformas agora ficam em Configurações; Importar e Exportar ficam juntos em Logs → Importar / Exportar.
+- Formulário de contato: banda preenchida pela frequência, frequência e modo do último contato já preenchidos, botão "Salvar e adicionar novo" (Ctrl+Enter) e campos com largura pelo tamanho usual nos ADIFs.
+- Ficha do indicativo: bandeira do país, resumo com os dados comuns (nome, QTH, endereço, estado, Grid, país, zonas, e-mail), coluna Nome no lugar de Estação e sem o quadro de erro da consulta; se o QRZ.com bloquear o login, o app espera o horário informado e avisa em Preferências.
+- Filtros com o campo Indicativo em primeiro lugar; "quadrícula" passa a se chamar "Grid" em todo o programa.
+
 ## 0.5.0 - 2026-10-29
 
 - Recuperação automática dos contatos: se o banco abrir vazio, o programa procura e restaura os dados da versão anterior (inclusive da pasta do antigo QSL Analyzer) e avisa quantos contatos recuperou. Um banco com contatos nunca é sobrescrito.

@@ -15,14 +15,14 @@ Aplicativo para **Windows, Linux e macOS** que **gerencia e analisa os contatos 
 - **Formatos:** ADIF 2/3 (.adi), ADX (XML), Cabrillo 2/3, EDI REG1TEST (concursos VHF/UHF) e CSV com cabeçalho. Um ADIF também pode ser colado direto na tela.
 - **Plataformas online:** baixa e importa direto do **QRZ.com Logbook** (chave de API), do **ARRL LoTW** (confirmações), do **eQSL.cc** (Inbox) e do **Club Log**. As credenciais só ficam guardadas se você pedir, criptografadas pelo Windows.
 - **Menu Logs:** Contatos (inserir, editar e apagar) · Importar logs (em um passo, com popup de progresso) · Plataformas: baixar, enviar e sincronizar com QRZ.com, LoTW (via TQSL), eQSL e Club Log · Modificar logs · Saúde do log · Busca no log (curingas `*` e `?`) · Exportar logs · Backup e restauração.
-- **Fichas clicáveis:** indicativos, países/DXCC, quadrículas, prefixos, zonas, continentes e estações abrem uma ficha com todos os seus contatos; a do indicativo mostra também foto e dados do QRZ.com/HamQTH.
+- **Fichas clicáveis:** indicativos, países/DXCC, Grids, prefixos, zonas, continentes e estações abrem uma ficha com todos os seus contatos; a do indicativo mostra também foto e dados do QRZ.com/HamQTH.
 - **Menu Estatísticas** com 20 análises: Estatísticas básicas, Estações trabalhadas, Mapas de atividade, Bandas/modos, Primeiro DXCC trabalhado, Trocas de banda, Pausas, Gráficos de QSOs, de duplicados, de pontos e de zonas, DXCC/locator, Arquivos KML (mapas), Azimutes/distâncias, Gráficos de tempo, Gráficos históricos, Tempo de operação, Taxa de QSOs, Taxas máximas e Taxas médias.
 - **Aba QSL:** confirmações por papel, LoTW e eQSL, matriz **DXCC × banda**, **Diplomas** (DXCC, WAZ, WAS, WPX, VUCC, IOTA), **Faltam confirmar** e **Entidades raras**.
 - **Mais análises:** resumo da atividade no Dashboard, Propagação, Comparar períodos, Estações frequentes, Novos indicativos e Concursos.
 - **Gráficos interativos no estilo BI.** Clique numa barra, célula, ponto do mapa ou rótulo para filtrar a tela inteira, arraste sobre um gráfico de linha para escolher um período e clique na legenda para ligar ou desligar séries. Os filtros se aplicam na hora e aparecem como chips removíveis, com botão de desfazer. Gráficos animados com dicas ao passar o mouse.
 - **Relatórios:** gerador personalizável. Você escolhe as seções, a ordem, os parâmetros de cada uma, a capa, o papel (A4/Carta/Ofício/A3), a orientação, as tabelas (todas, só a principal ou nenhuma), os gráficos, a quebra de página por seção, cores claras para impressão e o rodapé. A prévia mostra exatamente o que vai para o **PDF**, que também pode sair em HTML. Os modelos podem ser salvos. Há ainda a aba **Comparar** para ver containers ou indicativos lado a lado.
-- **Exportação:** ADIF v3, CSV, Cabrillo 3.0 e KML/Google Earth (entidades, quadrículas, linhas de QSO e replay temporal). Cada página de estatística exporta CSV, TXT, PNG e PDF. Também há backup e restauração completos do banco. A exportação e o backup ficam no menu **Logs**.
-- **Configurações:** preferências (indicativo, quadrícula, pausa padrão, regra de pontos, cores dos gráficos e tema), banco de dados (limpeza por indicativo, CTY.DAT atualizável e reinício de fábrica), bloco de notas, registro de atividade e relatório de problemas.
+- **Exportação:** ADIF v3, CSV, Cabrillo 3.0 e KML/Google Earth (entidades, Grids, linhas de QSO e replay temporal). Cada página de estatística exporta CSV, TXT, PNG e PDF. Também há backup e restauração completos do banco. A exportação e o backup ficam no menu **Logs**.
+- **Configurações:** preferências (indicativo, Grid, pausa padrão, regra de pontos, cores dos gráficos e tema), banco de dados (limpeza por indicativo, CTY.DAT atualizável e reinício de fábrica), bloco de notas, registro de atividade e relatório de problemas.
 - Interface em português, inglês e espanhol, com tema escuro ou claro.
 
 | Estatísticas com filtro por clique | Limpeza do banco por indicativo |
@@ -50,7 +50,7 @@ A cada abertura, o aplicativo lembra que o site oficial é www.pt2vhf.com. Em se
 ## Instalar e começar
 
 1. Baixe o pacote do seu sistema em [www.pt2vhf.com/qsl](https://www.pt2vhf.com/qsl).
-2. Em **Configurações → Preferências**, informe o seu indicativo e a sua quadrícula (usada nas distâncias e azimutes).
+2. Em **Configurações → Preferências**, informe o seu indicativo e o seu Grid (usada nas distâncias e azimutes).
 3. Em **Logs → Enviar logs**, arraste os arquivos. Depois, em **Logs → Importar logs**, escolha o container e importe. Outra opção é usar **Logs → Importar de plataformas**.
 4. Explore o **Dashboard**, as **Estatísticas** e a aba **QSL**, e monte o seu relatório em **Relatórios**.
 

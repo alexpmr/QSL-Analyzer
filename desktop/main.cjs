@@ -117,7 +117,7 @@ async function start(){
   // Ficha da estação: dados e foto do QRZ.com / HamQTH (somente esses domínios, HTTPS).
   handle('lookup',async({url,binary=false})=>{
     const u=new URL(url);
-    if(u.protocol!=='https:'||!/(^|\.)(qrz\.com|hamqth\.com)$/i.test(u.hostname))throw new Error('Host não permitido: '+u.hostname);
+    if(u.protocol!=='https:'||!/(^|\.)(qrz\.com|hamqth\.com|flagcdn\.com)$/i.test(u.hostname))throw new Error('Host não permitido: '+u.hostname);
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
     try{
       const res=await fetch(u,{headers:{'User-Agent':AGENT+'/'+app.getVersion()},signal:controller.signal});

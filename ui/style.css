@@ -347,3 +347,10 @@ dialog.qsoDialog>div>form>label{display:flex;flex-direction:column;gap:5px;margi
 .fields.qsoFields{display:flex;flex-wrap:wrap;gap:10px 12px}
 .qsoFields label{flex:0 1 calc(var(--w) + 26px);min-width:0}
 .qsoFields input{width:100%;box-sizing:border-box}
+.led{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;background:#5d6b7d;vertical-align:middle;box-shadow:0 0 0 2px rgba(0,0,0,.25)}
+.led.ok{background:#3ddc84;box-shadow:0 0 8px #3ddc84}
+.led.bad{background:#ff5252;box-shadow:0 0 8px #ff5252}
+.entityHead h2 .flag{height:22px;width:auto;margin-right:10px;vertical-align:-3px;border-radius:3px;box-shadow:0 0 0 1px var(--border)}
+.commonInfo{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px 16px;margin:8px 0 12px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--panel2)}
+.commonInfo small{display:block;font-size:10px;text-transform:uppercase;color:var(--muted)}
+.commonInfo span{color:var(--strong)}

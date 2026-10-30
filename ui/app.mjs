@@ -11,6 +11,7 @@ import { APP_VERSION } from '../src/version.mjs';
 import { backend, isDesktop } from './backend.mjs';
 import { setPalette, loadLand, bars, worldMap, stacked, table, tile, esc, entityLink } from './charts.mjs';
 import { STAT_PAGES, QSL_PAGES, ALL_SECTIONS, sectionById, defaultParams, fmtDate, fmtDateTime, fmtDur } from './pages.mjs';
+import { isoForCountry, flagUrl } from './flags.mjs';
 import { renderEntity, ENTITY_FILTER } from './entity.mjs';
 import { buildBackup, readBackup, sealSecrets, openSecrets, b64, unb64 } from './backup.mjs';
 import { summaryFacts, logHealth } from '../src/insights.mjs';
@@ -27,11 +28,11 @@ const t = (key, vars) => translate(db.prefs.language, key, vars);
 // ---------- Navegação ----------
 const NAV = [
   { id: 'dashboard', pages: ['dashboard'] },
-  { id: 'logs', pages: ['contacts', 'import', 'platforms', 'exportlogs', 'modify', 'health', 'search', 'backup'] },
+  { id: 'logs', pages: ['contacts', 'import', 'modify', 'health', 'search', 'backup'] },
   { id: 'stats', pages: STAT_PAGES.map(p => p.id) },
   { id: 'qsl', pages: QSL_PAGES.map(p => p.id) },
   { id: 'reports', pages: ['report', 'compare'] },
-  { id: 'settings', pages: ['preferences', 'database', 'scratchpad', 'activitylog', 'bug'] },
+  { id: 'settings', pages: ['preferences', 'platforms', 'database', 'scratchpad', 'activitylog', 'bug'] },
   { id: 'help', pages: ['help'] },
   { id: 'about', pages: ['about'] },
 ];
@@ -113,9 +114,9 @@ function filterBar() {
   const active = Object.values(f).some(x => (Array.isArray(x) ? x.length : x));
   const count = Object.values(f).filter(x => (Array.isArray(x) ? x.length : x)).length;
   return `<details class="filterBox"${ui.filtersOpen ? ' open' : ''}><summary><span>${esc(t('filters'))}${count ? ` <b>${count}</b>` : ''}</span>${active ? `<span class="chips inline">${filterChips()}</span>` : `<small class="biHint">${esc(t('biHint'))}</small>`}</summary><form id="filterBar" class="filterBar">
+    <label><span>${esc(t('callWildcard'))}</span><input data-filter="call" value="${esc(f.call || '')}" placeholder="PY*"></label>
     ${sel('stations', v.stations, 'station')}${sel('bands', v.bands, 'band')}${sel('modes', v.modes, 'mode')}${sel('operators', v.operators, 'operator')}${sel('conts', v.conts, 'cont')}
     <label><span>${esc(t('from'))}</span><input type="date" data-filter="from" value="${esc(f.from || '')}"></label><label><span>${esc(t('to'))}</span><input type="date" data-filter="to" value="${esc(f.to || '')}"></label>
-    <label><span>${esc(t('callWildcard'))}</span><input data-filter="call" value="${esc(f.call || '')}" placeholder="PY*"></label>
     <div class="filterActions"><button type="submit">${esc(t('apply'))}</button>${active ? `<button type="button" id="clearFilter">${esc(t('clearFilter'))}</button>` : ''}${ui.filterHistory?.length ? `<button type="button" id="undoFilter" title="${esc(t('undoFilter'))}">↶</button>` : ''}</div>
     <div class="savedFilters"><select id="savedFilterSel" title="${esc(t('savedFilters'))}"><option value="">${esc(t('savedFilters'))}…</option>${options(Object.keys(db.prefs.savedFilters || {}), '')}</select>${active ? `<button type="button" id="saveFilter" title="${esc(t('saveFilterHint'))}">☆ ${esc(t('saveFilter'))}</button>` : ''}${Object.keys(db.prefs.savedFilters || {}).length ? `<button type="button" id="deleteSavedFilter" title="${esc(t('deleteSavedFilter'))}">✕</button>` : ''}</div></form></details>`;
 }
@@ -225,7 +226,7 @@ function summaryHtml(all) {
 }
 
 PAGES.dashboard = () => {
-  if (!db.qsos.length) return `<section class="page wide"><div class="empty"><span>⌁</span><strong>${esc(t('emptyDbTitle'))}</strong><p>${esc(t('emptyDbBody'))}</p><button data-go="logs:import">${esc(t('page_import'))}</button> <button data-go="logs:platforms">${esc(t('page_platforms'))}</button></div></section>`;
+  if (!db.qsos.length) return `<section class="page wide"><div class="empty"><span>⌁</span><strong>${esc(t('emptyDbTitle'))}</strong><p>${esc(t('emptyDbBody'))}</p><button data-go="logs:import">${esc(t('page_import'))}</button> <button data-go="settings:platforms">${esc(t('page_platforms'))}</button></div></section>`;
   const all = filteredQsos();
   const b = S.basic(all, { pauseMin: db.prefs.pauseMinutes, points: pointsFor() }), q = S.qslStatus(all);
   const bandsData = S.groupCount(all, x => x.band), bandSorted = sortBands(bandsData.map(x => x[0])).map(k => [k, bandsData.find(x => x[0] === k)[1]]);
@@ -243,6 +244,7 @@ PAGES.dashboard = () => {
 };
 
 // ---------- Importação (um passo, com popup de progresso) ----------
+PAGES.exportlogs = () => PAGES.import();
 PAGES.import = () => {
   const rep = ui.importReport;
   return `<section class="page wide">${head('logs', 'page_import', 'importHelp')}
@@ -257,7 +259,8 @@ PAGES.import = () => {
       <label class="check"><input type="checkbox" name="mergeQsl"${db.prefs.mergeQsl ? ' checked' : ''}> ${esc(t('mergeQsl'))}</label>
       <label class="check"><input type="checkbox" name="recalc"${db.prefs.recalcOnImport ? ' checked' : ''}> ${esc(t('recalcCountry'))}</label>
     </form></details>
-    ${rep ? `<h2>${esc(t('importResult'))}</h2><div class="tiles">${tile(t('added'), rep.added)}${tile(t('skippedExisting'), rep.skipped)}${tile(t('qslUpdated'), rep.merged)}${tile(t('errors'), rep.errors)}</div><p><button data-go="dashboard">${esc(t('page_dashboard'))}</button> <button data-go="stats:basic">${esc(t('page_basic'))}</button></p>` : ''}</section>`;
+    ${rep ? `<h2>${esc(t('importResult'))}</h2><div class="tiles">${tile(t('added'), rep.added)}${tile(t('skippedExisting'), rep.skipped)}${tile(t('qslUpdated'), rep.merged)}${tile(t('errors'), rep.errors)}</div><p><button data-go="dashboard">${esc(t('page_dashboard'))}</button> <button data-go="stats:basic">${esc(t('page_basic'))}</button></p>` : ''}
+    <h2 id="exportSection">${esc(t('page_exportlogs'))}</h2><p class="help">${esc(t('exportHelp'))}</p>${exportBody()}</section>`;
 };
 
 function readImportForm() {
@@ -355,8 +358,9 @@ const QSL_FLAGS = [['qslSent', 'QSL_SENT'], ['qslRcvd', 'QSL_RCVD'], ['lotwSent'
 function openQsoForm(id = null, presetCall = '') {
   const q = id ? db.qsos.find(x => x.id === id) : null;
   const now = new Date(), ts = q ? new Date(q.ts) : now;
+  const last = q ? null : db.prefs.lastManual || null;
   const v = {
-    call: q?.call || presetCall, date: ts.toISOString().slice(0, 10), time: ts.toISOString().slice(11, 16), band: q?.band || '', freq: q?.freq ? String(q.freq) : '', mode: q?.mode || '', submode: q?.submode || '',
+    call: q?.call || presetCall, date: ts.toISOString().slice(0, 10), time: ts.toISOString().slice(11, 16), band: q?.band || last?.band || '', freq: q?.freq ? String(q.freq) : last?.freq || '', mode: q?.mode || last?.mode || '', submode: q?.submode || last?.submode || '',
     rstS: q?.rstS || '', rstR: q?.rstR || '', station: q?.station || (db.prefs.myCall || '').toUpperCase(), operator: q?.operator || '', myGrid: q?.myGrid || db.prefs.myGrid || '', grid: q?.grid || '',
     name: q?.name || '', qth: q?.qth || '', comment: q?.comment || '', contest: q?.contest || '', stx: q?.stx || '', srx: q?.srx || '',
   };
@@ -374,8 +378,11 @@ function openQsoForm(id = null, presetCall = '') {
     <datalist id="bandList">${['160m', '80m', '60m', '40m', '30m', '20m', '17m', '15m', '12m', '11m', '10m', '6m', '4m', '2m', '1.25m', '70cm', '23cm'].map(b => `<option value="${b}">`).join('')}</datalist>
     <datalist id="modeList">${['SSB', 'CW', 'FM', 'AM', 'FT8', 'FT4', 'RTTY', 'PSK31', 'JT65', 'MSK144', 'Q65', 'JS8', 'SSTV', 'DSTAR', 'DMR', 'C4FM'].map(m => `<option value="${m}">`).join('')}</datalist>
     <p id="qsoError" class="error"></p>
-    <div class="dialogFoot">${q ? `<button type="button" class="dangerButton" data-qso-delete="${q.id}">${esc(t('delete'))}</button>` : ''}<button type="button" data-qso-cancel>${esc(t('cancel'))}</button><button type="submit" class="primary">${esc(t('save'))}</button></div></form>`;
+    <div class="dialogFoot">${q ? `<button type="button" class="dangerButton" data-qso-delete="${q.id}">${esc(t('delete'))}</button>` : ''}<button type="button" data-qso-cancel>${esc(t('cancel'))}</button>${q ? '' : `<button type="submit" name="again" value="1" title="Ctrl+Enter">${esc(t('saveAndNew'))}</button>`}<button type="submit" class="primary">${esc(t('save'))}</button></div></form>`;
   const dlg = $('#qsoDialog');
+  // Banda automática ao digitar a frequência; Ctrl+Enter = salvar e adicionar novo.
+  $('#qsoForm').freq.addEventListener('input', e => { const b = bandFromFreq(parseFloat(String(e.target.value).replace(',', '.'))); if (b) { $('#qsoForm').band.value = b; workedBefore(id); } });
+  if (!q) $('#qsoForm').addEventListener('keydown', e => { if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); saveQsoForm($('#qsoForm'), true); } });
   $('#qsoForm').addEventListener('input', e => { if (['call', 'band', 'mode'].includes(e.target.name)) workedBefore(id); });
   workedBefore(id);
   if (!dlg.open) dlg.showModal();
@@ -395,7 +402,7 @@ function workedBefore(id) {
   box.innerHTML = `<span class="badge">${esc(t('wbWorked', { n: list.length }))}</span> ${esc(bands.join(' '))} · ${esc(t('lastQso'))}: ${esc(fmtDate(last.ts))}${last.name ? ' · ' + esc(last.name) : ''}${list.some(DB.isConfirmed) ? ' · ✓ QSL' : ''}${slotTxt ? ` <span class="badge${slot.length ? '' : ' new'}">${esc(slotTxt)}</span>` : ''}`;
 }
 
-function saveQsoForm(form) {
+function saveQsoForm(form, again = false) {
   const f = Object.fromEntries(new FormData(form).entries()), id = Number(form.dataset.id) || null, err = $('#qsoError');
   const rec = {};
   for (const [k, adif] of QSO_FIELDS) if (String(f[k] ?? '').trim()) rec[adif] = String(f[k]).trim();
@@ -415,11 +422,17 @@ function saveQsoForm(form) {
   const dupe = db.qsos.find(x => x.id !== id && (DB.dedupeKey(x) === DB.dedupeKey(q) || DB.dedupeKey(x) === DB.dedupeKey(q, -1) || DB.dedupeKey(x) === DB.dedupeKey(q, 1)));
   if (dupe && !confirm(t('qsoDuplicate', { c: dupe.call, d: fmtDateTime(dupe.ts) }))) return;
   if (old) { Object.keys(old).forEach(k => { if (!['id', 'c', 'src', 'imported'].includes(k)) delete old[k]; }); Object.assign(old, q, { edited: Date.now() }); DB.logActivity(db, 'qso-edit', `${q.call} ${fmtDateTime(q.ts)}`); }
-  else { db.qsos.push({ ...q, id: db.nextId++, c: 'main', src: 'manual', imported: Date.now() }); DB.logActivity(db, 'qso-new', `${q.call} ${fmtDateTime(q.ts)}`); }
+  else {
+    const added = { ...q, id: db.nextId++, c: 'main', src: 'manual', imported: Date.now() };
+    db.qsos.push(added); DB.logActivity(db, 'qso-new', `${q.call} ${fmtDateTime(q.ts)}`);
+    db.prefs.lastManual = { freq: q.freq ? String(q.freq) : '', band: q.band, mode: q.mode, submode: q.submode || '' };
+    autoSendQso(added);
+  }
   persist();
-  $('#qsoDialog').close();
   toast(t('contactSaved', { c: q.call }));
   render();
+  if (again && !old) { openQsoForm(); setTimeout(() => $('#qsoForm')?.call.focus(), 0); return; }
+  $('#qsoDialog').close();
   if ($('#entityDialog').open && ui.entityStack.length) { const top = ui.entityStack.pop(); openEntity(top.type, top.value, { keepHistory: true }); }
 }
 
@@ -540,22 +553,24 @@ PAGES.platforms = () => {
       if (f === 'qthNickname' || f === 'tqslLocation') return `<label><span>${esc(t('cred_' + f))}</span><input name="${f}" type="text" autocomplete="off" value="${esc(s[f] || '')}"></label>`;
       return `<label><span>${esc(t('cred_' + f))}</span><input name="${f}" type="${/password|apiKey/.test(f) ? 'password' : 'text'}" autocomplete="off" placeholder="${s.secret ? '••••••• (' + esc(t('saved')) + ')' : ''}"></label>`;
     };
-    return `<form class="platformCard" data-platform="${id}"><div class="cardHead"><strong>${esc(p.name)}</strong><small>${esc(new URL(p.url).host)}</small></div><p class="help">${esc(t(p.help))}</p>
+    return `<form class="platformCard" data-platform="${id}"><div class="cardHead"><strong><span class="led ${s.test ? (s.test.ok ? 'ok' : 'bad') : ''}" title="${esc(s.test ? (s.test.ok ? t('connOk') : t('connFail', { e: s.test.error })) + ' · ' + fmtDateTime(s.test.at) : t('connUnknown'))}"></span>${esc(p.name)}</strong><small>${esc(new URL(p.url).host)}</small></div><p class="help">${esc(t(p.help))}</p>
       <div class="fields">${p.fields.map(input).join('')}
       <label><span>${esc(t('defaultStation'))}</span><input name="station" maxlength="20" value="${esc(s.station || db.prefs.myCall || '')}"></label></div>
       <label class="check"><input type="checkbox" name="remember"${s.remember ? ' checked' : ''}> ${esc(t('rememberCreds'))}</label>
       <label class="check"><input type="checkbox" name="autoSync"${s.autoSync ? ' checked' : ''}> ${esc(t('autoSync'))}</label>
+      <label class="check"><input type="checkbox" name="autoSend"${s.autoSend ? ' checked' : ''}> ${esc(t('autoSend'))}</label>
       <p class="platformStatus" data-status="${id}">${esc(s.lastError ? t('platformError', { e: s.lastError }) : s.last ? t('lastSync', { d: fmtDateTime(s.last), n: s.lastAdded ?? 0 }) : '')}</p>
       <div class="platformActions">
         <button type="submit" class="primary">⇩ ${esc(t('downloadImport'))}</button>
         <button type="button" data-platform-upload="${id}">⇧ ${esc(t('uploadPlatform', { n: pendingSend.toLocaleString() }))}</button>
         <button type="button" data-platform-sync="${id}">⇅ ${esc(t('syncPlatform'))}</button>
         <button type="button" data-platform-compare="${id}">${esc(t('comparePlatform'))}</button>
+        <button type="button" data-platform-test="${id}">● ${esc(t('testConnection'))}</button>
         <button type="button" data-platform-export="${id}">${esc(t('exportForPlatform'))}</button>
       </div>
       ${cmp ? `<div class="compareResult"><div class="tiles">${tile(t('inBoth'), cmp.both)}${tile(t('onlyLocal'), cmp.onlyLocal.length)}${tile(t('onlyRemote'), cmp.onlyRemote.length)}</div>${cmp.onlyLocal.length ? `<button type="button" data-export-only-local="${id}">${esc(t('exportOnlyLocal'))}</button>` : ''}${cmp.onlyRemote.length ? `<button type="button" data-import-only-remote="${id}">${esc(t('importOnlyRemote'))}</button>` : ''}</div>` : ''}</form>`;
   }).join('');
-  return `<section class="page wide">${head('logs', 'page_platforms', 'platformsHelp')}${isDesktop ? '' : `<p class="notice">${esc(t('platformsDesktopOnly'))}</p>`}<p class="help">${esc(t('uploadScopeHelp'))}</p><div class="platformGrid">${cards}</div>
+  return `<section class="page wide">${head('settings', 'page_platforms', 'platformsHelp')}${isDesktop ? '' : `<p class="notice">${esc(t('platformsDesktopOnly'))}</p>`}<p class="help">${esc(t('uploadScopeHelp'))}</p><div class="platformGrid">${cards}</div>
     <p class="help">${esc(t('platformsOther'))}</p></section>`;
 };
 
@@ -567,7 +582,7 @@ async function platformCreds(id, form) {
   const creds = {};
   for (const f of PLATFORMS[id].fields) creds[f] = (data[f] ?? '') || (OPTIONAL_FIELDS.has(f) ? saved[f] : stored[f]) || '';
   if (!validDate(creds.since)) creds.since = DEFAULT_SINCE;
-  return { creds, data: { station: data.station ?? saved.station ?? db.prefs.myCall ?? '', remember: form ? data.remember === 'on' : saved.remember, autoSync: form ? data.autoSync === 'on' : saved.autoSync, since: creds.since, qthNickname: creds.qthNickname || '', tqslLocation: creds.tqslLocation || '' } };
+  return { creds, data: { station: data.station ?? saved.station ?? db.prefs.myCall ?? '', remember: form ? data.remember === 'on' : saved.remember, autoSync: form ? data.autoSync === 'on' : saved.autoSync, autoSend: form ? data.autoSend === 'on' : saved.autoSend, since: creds.since, qthNickname: creds.qthNickname || '', tqslLocation: creds.tqslLocation || '' } };
 }
 
 const platformErrorText = (code, detail = '') => (code === 'AUTH' ? t('authFailed') : code === 'RATE_LIMIT' ? t('lotwRateLimit') : code === 'INVALID_RESPONSE' ? t('invalidResponse', { d: detail || '—' }) : code) + (detail && code !== 'INVALID_RESPONSE' && code !== 'RATE_LIMIT' ? ` (${detail})` : '');
@@ -598,7 +613,9 @@ const platformAdjust = id => q => {
 };
 
 async function savePlatform(id, data, creds, patch = {}) {
-  const entry = { ...(db.platforms[id] || {}), station: data.station, remember: data.remember, autoSync: data.autoSync, since: data.since, qthNickname: data.qthNickname, tqslLocation: data.tqslLocation, ...patch };
+  const entry = { ...(db.platforms[id] || {}), station: data.station, remember: data.remember, autoSync: data.autoSync, autoSend: data.autoSend, since: data.since, qthNickname: data.qthNickname, tqslLocation: data.tqslLocation, ...patch };
+  if (entry.autoSend && !entry.autoSendSince) entry.autoSendSince = Date.now();
+  if (!entry.autoSend) delete entry.autoSendSince;
   if (entry.remember) entry.secret = await backend.encrypt(JSON.stringify(Object.fromEntries(Object.entries(creds).filter(([f]) => SECRET_FIELDS(f)))));
   else { delete entry.secret; entry.autoSync = false; }
   db.platforms[id] = entry;
@@ -668,14 +685,19 @@ async function uploadPlatform(id, form) {
   const stamp = new Date();
   try {
     if (id === 'qrz') {
-      for (const q of list) {
-        const res = await backend.fetchPlatform(buildQrzInsert(creds, toAdifRecord(q)));
-        const r = res.error ? { ok: false, error: res.error } : parseQrzInsert(res.text);
-        if (r.ok) { markSent(id, q, stamp); r.duplicate ? st.skipped++ : st.added++; } else st.errors++;
-        st.done++; show(r.ok ? q.call : r.error);
-        if (r.fatal) throw new Error(r.error);
-        if (st.done % 20 === 0) { persist(); await tick(); }
+      // O QRZ aceita um registro por chamada: envia 6 em paralelo e atualiza a tela por lote.
+      let fatal = null;
+      for (let i = 0; i < list.length && !fatal; i += 6) {
+        await Promise.all(list.slice(i, i + 6).map(async q => {
+          const res = await backend.fetchPlatform(buildQrzInsert(creds, toAdifRecord(q)));
+          const r = res.error ? { ok: false, error: res.error } : parseQrzInsert(res.text);
+          if (r.ok) { markSent(id, q, stamp); r.duplicate ? st.skipped++ : st.added++; } else st.errors++;
+          if (r.fatal) fatal = r.error;
+          st.done++; show(r.ok ? q.call : r.error);
+        }));
+        if (i % 120 === 0) { persist(); await tick(); }
       }
+      if (fatal) throw new Error(fatal);
     } else if (id === 'eqsl') {
       for (let i = 0; i < list.length; i += 25) {
         const batch = list.slice(i, i + 25), res = await backend.fetchPlatform(buildEqslUpload(creds, batch.map(toAdifRecord)));
@@ -708,6 +730,74 @@ async function uploadPlatform(id, form) {
     await persist(true);
     progress.finish(t('platformError', { e: e.message }));
   } finally { form?.querySelectorAll('button').forEach(b => (b.disabled = false)); }
+}
+
+// Testa as credenciais com uma consulta leve (somente desde hoje) e guarda o resultado para o LED.
+async function testPlatform(id, form) {
+  const { creds, data } = await platformCreds(id, form);
+  const status = form?.querySelector('[data-status]') || { set textContent(v) {} };
+  const missing = validateCreds(id, creds);
+  let result;
+  if (missing.length) result = { ok: false, error: t('missingFields', { f: missing.map(m => t('cred_' + m)).join(', ') }) };
+  else if (platformLocked(id)) result = { ok: false, error: platformLocked(id) };
+  else {
+    status.textContent = t('testing');
+    try {
+      const res = await backend.fetchPlatform(buildRequest(id, { ...creds, since: new Date().toISOString().slice(0, 10) }, {}));
+      if (res.error) throw new Error(res.error);
+      const parsed = parseResponse(id, res.text, {});
+      result = parsed.error ? { ok: false, error: platformErrorText(parsed.error, parsed.detail || (res.status !== 200 ? 'HTTP ' + res.status : '')) } : { ok: true };
+    } catch (e) { result = { ok: false, error: e.message || t('noInternet') }; }
+  }
+  await savePlatform(id, data, creds, { test: { ...result, at: Date.now() } });
+  render();
+  toast(`${PLATFORMS[id].name}: ` + (result.ok ? t('connOk') : t('connFail', { e: result.error })), !result.ok);
+}
+
+// Envio silencioso de alguns contatos a uma plataforma (envio automático de contatos novos).
+async function sendQsosSilently(id, list) {
+  const { creds, data } = await platformCreds(id, null), stamp = new Date();
+  if (!list.length || (id !== 'lotw' && validateCreds(id, creds).length)) return false;
+  if (id === 'qrz') {
+    for (const q of list) {
+      const res = await backend.fetchPlatform(buildQrzInsert(creds, toAdifRecord(q)));
+      const r = res.error ? { ok: false, error: res.error } : parseQrzInsert(res.text);
+      if (!r.ok) throw new Error(r.error);
+      markSent(id, q, stamp);
+    }
+  } else if (id === 'eqsl') {
+    const res = await backend.fetchPlatform(buildEqslUpload(creds, list.map(toAdifRecord)));
+    const r = res.error ? { ok: false, error: res.error } : parseEqslUpload(res.text, list.length);
+    if (!r.ok) throw new Error(r.error);
+    list.forEach(q => markSent(id, q, stamp));
+  } else if (id === 'clublog') {
+    const res = await backend.fetchPlatform(buildClublogUpload(creds, toAdif(list, info.version || APP_VERSION)));
+    const r = res.error ? { ok: false, error: res.error } : parseClublogUpload(res.status, res.text);
+    if (!r.ok) throw new Error(r.error);
+    list.forEach(q => markSent(id, q, stamp));
+  } else if (id === 'lotw') {
+    if (!isDesktop || !data.tqslLocation) return false;
+    const r = await backend.tqslUpload({ adif: toAdif(list, info.version || APP_VERSION), location: data.tqslLocation });
+    if (!(r.code === 0 || r.code === 8 || r.code === 9)) throw new Error(r.error || 'TQSL ' + r.code);
+    list.forEach(q => markSent(id, q, stamp));
+  }
+  return true;
+}
+
+// Contatos incluídos no app vão para as plataformas marcadas; o que falhar fica na fila e é reenviado depois.
+const autoSendTargets = () => Object.keys(PLATFORMS).filter(id => db.platforms[id]?.autoSend && (db.platforms[id]?.secret || id === 'lotw'));
+async function autoSendQso(q) {
+  for (const id of autoSendTargets()) {
+    try { if (await sendQsosSilently(id, [q])) { persist(); toast(t('autoSent', { c: q.call, p: PLATFORMS[id].name })); } }
+    catch (e) { toast(t('autoSendQueued', { p: PLATFORMS[id].name, e: e.message }), true); }
+  }
+}
+async function retryAutoSend() {
+  for (const id of autoSendTargets()) {
+    const list = db.qsos.filter(q => q.src === 'manual' && !SENT[id](q) && q.imported >= (db.platforms[id].autoSendSince || 0));
+    if (!list.length) continue;
+    try { if (await sendQsosSilently(id, list)) { persist(); toast(t('autoSentN', { n: list.length, p: PLATFORMS[id].name })); } } catch { /* tenta de novo na próxima abertura */ }
+  }
 }
 
 // Conferência: o que existe só no app e só na plataforma, sem importar nada.
@@ -962,14 +1052,14 @@ PAGES.compare = () => {
 };
 
 // ---------- Exportação ----------
-PAGES.exportlogs = () => {
+function exportBody() {
   const n = filteredQsos().length;
-  return `<section class="page wide">${head('logs', 'page_exportlogs', 'exportHelp')}${filterBar()}<p class="pill">${esc(t('selectedQsos', { n }))} · ${esc(filterSummary())}</p>
+  return `${filterBar()}<p class="pill">${esc(t('selectedQsos', { n }))} · ${esc(filterSummary())}</p>
     <form id="exportForm" class="fields"><label><span>${esc(t('format'))}</span><select name="format"><option value="adif">ADIF v3 (.adi)</option><option value="csv">CSV</option><option value="cabrillo">Cabrillo 3.0</option><option value="kml">KML (Google Earth)</option></select></label>
       <label><span>${esc(t('cabrilloContest'))}</span><input name="contest" maxlength="40" placeholder="CQ-WW-SSB"></label>
       <label><span>${esc(t('cabrilloCall'))}</span><input name="call" maxlength="20" value="${esc(db.prefs.myCall)}"></label>
-      <div class="formActions"><button type="submit" class="primary">${esc(t('export'))}</button></div></form></section>`;
-};
+      <div class="formActions"><button type="submit" class="primary">${esc(t('export'))}</button></div></form>`;
+}
 
 PAGES.backup = () => `<section class="page">${head('logs', 'page_backup')}${backupSection()}</section>`;
 
@@ -986,7 +1076,7 @@ PAGES.preferences = () => {
       <label><span>${esc(t('theme'))}</span><select name="theme">${options(['dark', 'light'], p.theme, o => t(o))}</select></label>
       <label class="check"><input type="checkbox" name="mergeQsl"${p.mergeQsl ? ' checked' : ''}> ${esc(t('mergeQsl'))}</label>
       <label class="check"><input type="checkbox" name="recalcOnImport"${p.recalcOnImport ? ' checked' : ''}> ${esc(t('recalcCountry'))}</label>
-      <h2 class="span">${esc(t('lookupTitle'))}</h2><p class="help span">${esc(t('lookupHelp'))}</p>
+      <h2 class="span">${esc(t('lookupTitle'))}</h2><p class="help span">${esc(t('lookupHelp'))}</p>${p.qrzBlockedUntil > Date.now() ? `<p class="notice span">${esc(t('qrzBlocked', { d: fmtDateTime(p.qrzBlockedUntil) }))}</p>` : ''}
       <label><span>${esc(t('qrzUser'))}</span><input name="qrzUser" maxlength="40" autocomplete="off" value="${esc(db.platforms.lookup?.qrzUser || '')}"></label>
       <label><span>${esc(t('qrzPass'))}</span><input name="qrzPass" type="password" autocomplete="off" placeholder="${db.platforms.lookup?.qrzSecret ? '••••••• (' + esc(t('saved')) + ')' : ''}"></label>
       <label><span>${esc(t('hamqthUser'))}</span><input name="hamqthUser" maxlength="40" autocomplete="off" value="${esc(db.platforms.lookup?.hamqthUser || '')}"></label>
@@ -1168,6 +1258,7 @@ document.addEventListener('click', async e => {
   if (el.dataset.qsoDelete) return deleteQso(Number(el.dataset.qsoDelete));
   if (el.dataset.qsoCancel !== undefined) return $('#qsoDialog').close();
   if (el.dataset.contactsPage) { ui.contactsPage = Number(el.dataset.contactsPage); return render(); }
+  if (el.dataset.platformTest) return testPlatform(el.dataset.platformTest, el.closest('form'));
   if (el.dataset.platformCompare) return comparePlatform(el.dataset.platformCompare, el.closest('form'));
   if (el.dataset.platformUpload) return uploadPlatform(el.dataset.platformUpload, el.closest('form'));
   if (el.dataset.platformSync) return syncPlatform(el.dataset.platformSync, el.closest('form'));
@@ -1244,7 +1335,7 @@ document.addEventListener('submit', async e => {
     return render();
   }
   if (form.id === 'importForm') return;
-  if (form.id === 'qsoForm') return saveQsoForm(form);
+  if (form.id === 'qsoForm') return saveQsoForm(form, e.submitter?.name === 'again');
   if (form.id === 'autoBackupForm') { const f = new FormData(form); db.prefs.autoBackup = f.get('autoBackup'); db.prefs.backupKeep = Math.max(1, Math.min(100, Number(f.get('backupKeep')) || 5)); persist(); toast(t('saved')); if (db.prefs.autoBackup !== 'off' && !db.prefs.lastAutoBackup) autoBackup(true); return render(); }
   if (form.dataset.platform) return runPlatform(form.dataset.platform, form);
   if (form.id === 'modifyForm') {
@@ -1281,7 +1372,7 @@ document.addEventListener('submit', async e => {
     Object.assign(db.prefs, { myCall: String(f.get('myCall') || '').trim().toUpperCase(), myGrid: grid, pauseMinutes: Number(f.get('pauseMinutes')) || 15, pointsRule: f.get('pointsRule'), palette: f.get('palette'), theme: f.get('theme'), mergeQsl: f.get('mergeQsl') === 'on', recalcOnImport: f.get('recalcOnImport') === 'on' });
     const lk = db.platforms.lookup ||= {};
     lk.qrzUser = String(f.get('qrzUser') || '').trim(); lk.hamqthUser = String(f.get('hamqthUser') || '').trim();
-    if (f.get('qrzPass')) lk.qrzSecret = await backend.encrypt(String(f.get('qrzPass')));
+    if (f.get('qrzPass')) { lk.qrzSecret = await backend.encrypt(String(f.get('qrzPass'))); delete db.prefs.qrzBlockedUntil; lookupSession.qrz = null; }
     if (f.get('hamqthPass')) lk.hamqthSecret = await backend.encrypt(String(f.get('hamqthPass')));
     if (!lk.qrzUser) delete lk.qrzSecret;
     if (!lk.hamqthUser) delete lk.hamqthSecret;
@@ -1351,7 +1442,7 @@ async function lookupStation(call) {
   const configured = Boolean((c.qrzUser && c.qrzPass) || (c.hamqthUser && c.hamqthPass));
   if (!configured) return { data: null, meta: { configured: false } };
   let data = null, error = '';
-  if (c.qrzUser && c.qrzPass) {
+  if (c.qrzUser && c.qrzPass && !(db.prefs.qrzBlockedUntil > Date.now())) {
     try {
       for (let attempt = 0; attempt < 2 && !data; attempt++) {
         if (!lookupSession.qrz) { const r = parseQrz((await backend.lookup(qrzLoginUrl(c.qrzUser, c.qrzPass))).text); if (!r.key) throw new Error(r.error || 'QRZ'); lookupSession.qrz = r.key; }
@@ -1360,7 +1451,12 @@ async function lookupStation(call) {
         else if (r.notFound) break;
         else lookupSession.qrz = null;
       }
-    } catch (e) { error = 'QRZ.com: ' + e.message; }
+    } catch (e) {
+      error = 'QRZ.com: ' + e.message;
+      // "Username/password incorrect - blocked until 2026-10-30 00:59:01 UTC": não insiste até o horário informado.
+      const m = e.message.match(/blocked until ([\d-]+ [\d:]+)/i);
+      if (m) { db.prefs.qrzBlockedUntil = Date.parse(m[1].replace(' ', 'T') + 'Z') || Date.now() + 3600000; persist(); }
+    }
   }
   if (!data && c.hamqthUser && c.hamqthPass) {
     try {
@@ -1384,7 +1480,14 @@ async function openEntity(type, value, { refresh = false, keepHistory = false } 
   if (!keepHistory) ui.entityStack = [];
   ui.entityStack.push({ type, value });
   const draw = () => {
-    const html = renderEntity({ t, qsos: db.qsos, type, value, home: homePosition(), lookup: type === 'call' ? db.lookup[value] || ui.lookupPending?.[value] || null : null });
+    const lk = type === 'call' ? db.lookup[value] || ui.lookupPending?.[value] || null : null;
+    const country = type === 'country' ? value : type === 'call' ? (lk?.data?.country || db.qsos.find(q => q.call === value)?.country || '') : '';
+    const iso = isoForCountry(country), flag = iso ? (db.flags ||= {})[iso] || '' : '';
+    if (iso && !flag && isDesktop && !ui.flagPending?.[iso]) {
+      (ui.flagPending ||= {})[iso] = true;
+      backend.lookup(flagUrl(iso), true).then(r => { if (r.base64) { db.flags[iso] = `data:${r.type || 'image/png'};base64,${r.base64}`; persist(); const top = ui.entityStack[ui.entityStack.length - 1]; if (dlg.open && top?.type === type && top.value === value) draw(); } }).catch(() => {});
+    }
+    const html = renderEntity({ t, qsos: db.qsos, type, value, home: homePosition(), lookup: lk, flag });
     $('#entityBody').innerHTML = (ui.entityStack.length > 1 ? `<button id="entityBack" class="back">← ${esc(t('back'))}</button>` : '') + tabify(html, 'entity-' + type);
   };
   draw();
@@ -1396,7 +1499,7 @@ async function openEntity(type, value, { refresh = false, keepHistory = false } 
   (ui.lookupPending ||= {})[value] = { data: cached?.data || null, meta: { ...(cached?.meta || {}), configured: true, error: '' } };
   const res = await lookupStation(value);
   delete ui.lookupPending[value];
-  if (res.data || res.meta.configured) { db.lookup[value] = res; persist(); }
+  if (res.data || (res.meta.configured && !res.meta.error)) { db.lookup[value] = res; persist(); }
   const top = ui.entityStack[ui.entityStack.length - 1];
   if (dlg.open && top?.type === 'call' && top.value === value) draw();
 }
@@ -1489,7 +1592,7 @@ function siteNotice() {
   $('#siteNoticeOk').textContent = t('understood');
   $('#siteNoticeLink').onclick = e => { e.preventDefault(); backend.openExternal('https://www.pt2vhf.com/qsl'); };
   $('#siteNoticeOk').onclick = () => dlg.close();
-  dlg.addEventListener('close', async () => { await showMigration(); await showNews(); checkUpdate(false); autoSyncPlatforms(); }, { once: true });
+  dlg.addEventListener('close', async () => { await showMigration(); await showNews(); checkUpdate(false); await autoSyncPlatforms(); retryAutoSend(); }, { once: true });
   dlg.showModal();
   $('#siteNoticeOk').focus();
 }

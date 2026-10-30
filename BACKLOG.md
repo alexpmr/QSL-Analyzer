@@ -18,62 +18,6 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
-- **Backlog (30/10/2026): botão "Testar conexão" com LED vermelho/verde em cada plataforma.** Faz uma
-  consulta leve (QRZ: STATUS do logbook; LoTW: consulta mínima; eQSL e Club Log: validação das credenciais)
-  e acende LED verde (OK) ou vermelho (falha, com o motivo: credencial inválida, bloqueio, sem internet,
-  limite de consultas). O LED fica visível no cartão da plataforma e lembra o último resultado.
-
-- **Backlog (30/10/2026): mover "Plataformas (QRZ, LoTW, eQSL, Club Log)" do menu Logs para Configurações.**
-  A página inteira (credenciais, baixar, enviar, sincronizar, envio automático) passa a ficar em Configurações;
-  links internos que levam a ela (ex.: ficha do indicativo, avisos) apontam para o novo lugar.
-
-- **Backlog (30/10/2026): aproveitar ao máximo a consulta do QRZ.com mesmo sem assinatura.** Trazer tudo o
-  que a API XML devolver para contas gratuitas (nome, endereço, cidade, estado, país, Grid, foto do perfil
-  quando vier), mostrar a bandeira do país (pelo DXCC/CTY) e usar esses dados no resumo da ficha do indicativo.
-  Verificar na documentação/resposta real quais campos vêm sem assinatura e completar o que faltar com HamQTH
-  e os próprios contatos.
-
-- **Backlog (30/10/2026): tabela "Todos os QSOs" da ficha do indicativo.** Tirar a coluna Estação e incluir a
-  coluna Nome. Acima da tabela, um resumo com os dados comuns aos contatos desse indicativo (os valores mais
-  recentes ou mais frequentes nos QSOs: nome, endereço/QTH, Grid, país, estado, município, e-mail etc.).
-
-- **Backlog (30/10/2026): tirar da ficha do indicativo o quadro de erro da consulta.** Quando a consulta
-  QRZ.com/HamQTH falha (ex.: "Username/password incorrect - blocked until ..."), não mostrar o quadro grande
-  com a mensagem e os botões "Atualizar dados"/"Ver no QRZ.com"; a ficha começa direto nos números. O erro de
-  credencial fica só como aviso em Configurações/Preferências e, enquanto o QRZ estiver bloqueado, não
-  consultar de novo até o horário informado.
-
-- **Backlog (30/10/2026): juntar Importar e Exportar numa mesma aba** do menu Logs (hoje são páginas
-  separadas: `import` e `exportlogs`), com sub-abas ou seções Importar / Exportar.
-- **Backlog (30/10/2026): campo Indicativo primeiro no filtro comum.** Na barra de filtros, mover
-  "Indicativo (* ?)" para a primeira posição, antes de Estação.
-- **Backlog (30/10/2026): trocar "quadrícula" por "Grid" em todo o sistema** (rótulos, ajuda, relatórios,
-  fichas, mensagens; textos em pt-BR e es; no site também, se aparecer).
-
-- **Backlog (30/10/2026): envio automático de cada contato novo, por plataforma.** Em cada plataforma
-  (QRZ.com, eQSL, Club Log, LoTW via TQSL; HRDLog.net quando existir) uma opção "Enviar automaticamente os
-  contatos incluídos no QSL Manager". Ao salvar um contato novo (ou editado), enviar em segundo plano às
-  plataformas marcadas, marcar como enviado e, se falhar (sem internet etc.), deixar na fila para a próxima
-  tentativa, com aviso discreto. Detalha o item 5 da lista de logbook.
-
-- **Backlog (30/10/2026): importação do LoTW muito lenta (avança um a um).** Relato com print: "Importando de
-  ARRL LoTW", 78 / 25.940 processados após um bom tempo (1 adicionado, 77 já existiam). Investigar o gargalo
-  (o laço de `importFiles` usa lotes de 300, então algo por registro está lento: busca de duplicados/mesclagem de
-  QSL no importador, `enrich`/CTY ou atualização da tela) e processar em lotes rápidos, com índice por chave e
-  atualização do progresso por tempo, não por registro. Meta: 25 mil contatos em poucos segundos.
-
-- **Backlog (30/10/2026): botão "Salvar e adicionar novo" no formulário de contato (texto exato do botão).** Ao lado de "Salvar", grava o
-  contato e reabre o formulário limpo (com data/hora atuais e, junto do item de pré-preenchimento, frequência e
-  modo do último), com foco no indicativo; atalho de teclado sugerido: Ctrl+Enter.
-
-- **Backlog (30/10/2026): novo contato pré-preenchido com frequência e modo do último incluído.** Ao abrir
-  "Novo contato", trazer frequência, banda e modo (e submodo) do último contato inserido manualmente.
-
-- **[Feito, sai na próxima versão] (30/10/2026): campos do formulário de contato com largura pelo tamanho usual nos ADIFs** (indicativo, RST e banda curtos; nome e QTH largos).
-
-- **Backlog (30/10/2026): banda automática pela frequência.** No formulário de contato, ao informar a
-  frequência, preencher/ajustar a banda automaticamente (usar `bandFromFreq`).
-
 - **Backlog (29/10/2026): aproveitar o N1MM Logger+ além do UDP** (manual oficial: Features, Technical
   Information, Call History, Statistics, External UDP Messages).
   1. **Importar o banco do N1MM (.s3db, SQLite)** de `Documentos\N1MM Logger+\Databases`: listar os concursos
@@ -158,6 +102,54 @@ Itens solicitados e situação na versão 0.1.0.
   13. **Banco SQLite:** trocar o arquivo JSON por SQLite (gravação só do que mudou, logs com milhões de QSOs).
 
   Situação na 0.5.0: itens 1 (parcial: indicador "já trabalhado" no formulário de contato; consulta QRZ/HamQTH já existe na ficha do indicativo) e 12 (atalhos de pasta OneDrive/Dropbox/Google Drive/iCloud para o backup automático) feitos. Pendentes: janela de entrada ao vivo com consulta automática, itens 5, 10 e 13, e N1MM.
+
+## Resolvidos na 0.6.0 (30/10/2026)
+
+- **[Resolvido] Backlog (30/10/2026): botão "Testar conexão" com LED vermelho/verde em cada plataforma.** Faz uma
+  consulta leve (QRZ: STATUS do logbook; LoTW: consulta mínima; eQSL e Club Log: validação das credenciais)
+  e acende LED verde (OK) ou vermelho (falha, com o motivo: credencial inválida, bloqueio, sem internet,
+  limite de consultas). O LED fica visível no cartão da plataforma e lembra o último resultado.
+- **[Resolvido] Backlog (30/10/2026): mover "Plataformas (QRZ, LoTW, eQSL, Club Log)" do menu Logs para Configurações.**
+  A página inteira (credenciais, baixar, enviar, sincronizar, envio automático) passa a ficar em Configurações;
+  links internos que levam a ela (ex.: ficha do indicativo, avisos) apontam para o novo lugar.
+- **[Resolvido] Backlog (30/10/2026): aproveitar ao máximo a consulta do QRZ.com mesmo sem assinatura.** Trazer tudo o
+  que a API XML devolver para contas gratuitas (nome, endereço, cidade, estado, país, Grid, foto do perfil
+  quando vier), mostrar a bandeira do país (pelo DXCC/CTY) e usar esses dados no resumo da ficha do indicativo.
+  Verificar na documentação/resposta real quais campos vêm sem assinatura e completar o que faltar com HamQTH
+  e os próprios contatos.
+- **[Resolvido] Backlog (30/10/2026): tabela "Todos os QSOs" da ficha do indicativo.** Tirar a coluna Estação e incluir a
+  coluna Nome. Acima da tabela, um resumo com os dados comuns aos contatos desse indicativo (os valores mais
+  recentes ou mais frequentes nos QSOs: nome, endereço/QTH, Grid, país, estado, município, e-mail etc.).
+- **[Resolvido] Backlog (30/10/2026): tirar da ficha do indicativo o quadro de erro da consulta.** Quando a consulta
+  QRZ.com/HamQTH falha (ex.: "Username/password incorrect - blocked until ..."), não mostrar o quadro grande
+  com a mensagem e os botões "Atualizar dados"/"Ver no QRZ.com"; a ficha começa direto nos números. O erro de
+  credencial fica só como aviso em Configurações/Preferências e, enquanto o QRZ estiver bloqueado, não
+  consultar de novo até o horário informado.
+- **[Resolvido] Backlog (30/10/2026): juntar Importar e Exportar numa mesma aba** do menu Logs (hoje são páginas
+  separadas: `import` e `exportlogs`), com sub-abas ou seções Importar / Exportar.
+- **[Resolvido] Backlog (30/10/2026): campo Indicativo primeiro no filtro comum.** Na barra de filtros, mover
+  "Indicativo (* ?)" para a primeira posição, antes de Estação.
+- **[Resolvido] Backlog (30/10/2026): trocar "quadrícula" por "Grid" em todo o sistema** (rótulos, ajuda, relatórios,
+  fichas, mensagens; textos em pt-BR e es; no site também, se aparecer).
+- **[Resolvido] Backlog (30/10/2026): envio automático de cada contato novo, por plataforma.** Em cada plataforma
+  (QRZ.com, eQSL, Club Log, LoTW via TQSL; HRDLog.net quando existir) uma opção "Enviar automaticamente os
+  contatos incluídos no QSL Manager". Ao salvar um contato novo (ou editado), enviar em segundo plano às
+  plataformas marcadas, marcar como enviado e, se falhar (sem internet etc.), deixar na fila para a próxima
+  tentativa, com aviso discreto. Detalha o item 5 da lista de logbook.
+- **[Resolvido] Backlog (30/10/2026): importação do LoTW muito lenta (avança um a um).** Relato com print: "Importando de
+  ARRL LoTW", 78 / 25.940 processados após um bom tempo (1 adicionado, 77 já existiam). Investigar o gargalo
+  (o laço de `importFiles` usa lotes de 300, então algo por registro está lento: busca de duplicados/mesclagem de
+  QSL no importador, `enrich`/CTY ou atualização da tela) e processar em lotes rápidos, com índice por chave e
+  atualização do progresso por tempo, não por registro. Meta: 25 mil contatos em poucos segundos.
+- **[Resolvido] Backlog (30/10/2026): botão "Salvar e adicionar novo" no formulário de contato (texto exato do botão).** Ao lado de "Salvar", grava o
+  contato e reabre o formulário limpo (com data/hora atuais e, junto do item de pré-preenchimento, frequência e
+  modo do último), com foco no indicativo; atalho de teclado sugerido: Ctrl+Enter.
+- **[Resolvido] Backlog (30/10/2026): novo contato pré-preenchido com frequência e modo do último incluído.** Ao abrir
+  "Novo contato", trazer frequência, banda e modo (e submodo) do último contato inserido manualmente.
+- **[Resolvido] (30/10/2026): campos do formulário de contato com largura pelo tamanho usual nos ADIFs** (indicativo, RST e banda curtos; nome e QTH largos).
+- **[Resolvido] Backlog (30/10/2026): banda automática pela frequência.** No formulário de contato, ao informar a
+  frequência, preencher/ajustar a banda automaticamente (usar `bandFromFreq`).
+  Nota: a lentidão era do envio ao QRZ.com (um contato por chamada) somada à falta da marca de "já enviado" nos contatos baixados que já existiam no banco.
 
 ## Resolvidos na 0.5.0 (29/10/2026)
 

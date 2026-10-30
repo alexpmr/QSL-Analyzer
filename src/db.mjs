@@ -117,6 +117,9 @@ const FILL_FIELDS = ['grid', 'name', 'qth', 'state', 'iota', 'cqz', 'ituz', 'dxc
 function mergeInto(target, src) {
   let changed = false;
   for (const f of QSL_FIELDS) if (src[f] === 'Y' && target[f] !== 'Y') { target[f] = 'Y'; changed = true; }
+  // Marcas de "já enviado" vindas da própria plataforma (o contato existe lá).
+  for (const f of ['lotwSent', 'eqslSent']) if (src[f] === 'Y' && target[f] !== 'Y') { target[f] = 'Y'; changed = true; }
+  for (const f of ['QRZCOM_QSO_UPLOAD_STATUS', 'CLUBLOG_QSO_UPLOAD_STATUS']) if (src.extra?.[f] === 'Y' && target.extra?.[f] !== 'Y') { (target.extra ||= {})[f] = 'Y'; changed = true; }
   for (const f of FILL_FIELDS) if ((target[f] === '' || target[f] === null || target[f] === undefined) && src[f] !== '' && src[f] !== null && src[f] !== undefined) { target[f] = src[f]; changed = true; }
   return changed;
 }
