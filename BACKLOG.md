@@ -24,6 +24,8 @@ Itens solicitados e situação na versão 0.1.0.
   caminho com espaços/acentos, antivírus/SmartScreen bloqueando o .exe baixado), se o instalador NSIS silencioso
   roda e com qual código de saída, e o relançamento. Gravar log do handoff em `updates\update-log.txt`; se a
   instalação falhar, reabrir a versão antiga e mostrar o erro; testar instalador e portátil (0.5.0 → 0.6.0 → próxima).
+  Atualização (30/10/2026): o instalador baixado manualmente do site atualizou normalmente para a 0.6.0, então o
+  pacote está bom; o problema está só no handoff do OTA.
 
 - **Backlog (29/10/2026): aproveitar o N1MM Logger+ além do UDP** (manual oficial: Features, Technical
   Information, Call History, Statistics, External UDP Messages).
