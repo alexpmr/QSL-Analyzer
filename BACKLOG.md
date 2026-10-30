@@ -18,6 +18,12 @@ Itens solicitados e situação na versão 0.1.0.
 
 ## Pendentes
 
+- **Backlog (30/10/2026): "Fazer backup agora" sem perguntar onde salvar e com progresso.** Hoje o botão abre
+  a janela "Salvar como" mesmo com a pasta de backups já escolhida. Gravar direto na pasta configurada (ou na
+  padrão), com nome datado, e mostrar popup de progresso (preparando, compactando, gravando) e, ao final, o
+  caminho do arquivo com botão "Abrir pasta". Manter uma opção "Salvar em outro local…" para quem quiser
+  escolher na hora. Restaurar também com popup de progresso.
+
 - **Backlog (30/10/2026): backup com vários botões "OneDrive" repetidos.** A detecção das pastas de nuvem
   (`cloud-folders` em `desktop/main.cjs`) lista a mesma pasta várias vezes (variáveis `OneDrive`,
   `OneDriveConsumer` e `~/OneDrive` apontando para o mesmo lugar, com diferença de maiúsculas/barra) ou contas
